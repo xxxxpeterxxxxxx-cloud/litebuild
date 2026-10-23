@@ -168,6 +168,8 @@ public class BuildController {
 	private static final int MAX_ATTEMPTS_PER_POS = 2;
 	private final PlacementJournal journal = new PlacementJournal();
 	private Planner repairPlanner;
+	/** The real build planner while a repair subset runs in its place. */
+	private Planner mainPlanner;
 	private boolean repairMode;
 	private int repairRound;
 	private int fullAuditRuns;
@@ -400,6 +402,7 @@ public class BuildController {
 		releaseInputs();
 		progress.flush();
 		abandonCheckpointScope();
+		clearRepairRun(); // non-scoped repairs are not covered by abandonCheckpointScope
 		if (transaction != null) {
 			AckTracker.remove(transaction);
 			transaction = null;
@@ -454,6 +457,8 @@ public class BuildController {
 		state = RunState.EMPTY;
 		blueprint = null;
 		planner = null;
+		repairPlanner = null;
+		mainPlanner = null;
 		snapshot = null;
 		supports.clear();
 		reservedCells = Set.of();
@@ -2393,6 +2398,20 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 	 */
 	private void markVerified(BuildTarget target) {
 		planner.markVerified(target);
+		// Mirror repair progress into the real build planner — only the
+		// matching task of the same phase, so a half-slab fix never marks
+		// its double-slab sibling done.
+		if (planner == repairPlanner && mainPlanner != null) {
+			for (BuildTarget t : mainPlanner.targetsAt(target.pos())) {
+				if (t.phase() == target.phase()
+						&& StateRules.constructionEquivalent(t.state(),
+								target.state())
+						&& Planner.phaseAllowed(t.phase(), config.fluidsEnabled,
+								config.activationEnabled)) {
+					mainPlanner.markVerified(t);
+				}
+			}
+		}
 		// Only persist a cell once every task at it is confirmed.
 		if (planner.isVerified(target.pos())) {
 			progress.noteVerified(target.pos());
@@ -2471,10 +2490,46 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 
 	private void clearRepairRun() {
 		repairMode = false;
+		// Mirror subset progress back before the scope is dropped — the
+		// sweep inside Planner.nextEligible marks cells verified without
+		// ever calling our markVerified wrapper (e.g. dependent door
+		// halves that only verify via world reads).
+		if (repairPlanner != null) {
+			syncRepairVerified();
+		}
+		// A finished/aborted repair hands the real build planner back —
+		// non-scoped rounds swap it out and would otherwise leave the
+		// subset scope permanently in place.
+		if (planner == repairPlanner && mainPlanner != null) {
+			planner = mainPlanner;
+		}
 		repairPlanner = null;
+		mainPlanner = null;
 		breakQueue.clear();
 		roundApproved.clear();
 		repairSettle = 0;
+	}
+
+	/** Copy every verified repair task into the main planner — same
+	 * position, same phase, same state, authorized phase only. */
+	private void syncRepairVerified() {
+		if (mainPlanner == null) {
+			return;
+		}
+		for (BuildTarget t : repairPlanner.targets()) {
+			if (!repairPlanner.isVerified(t)) {
+				continue;
+			}
+			for (BuildTarget m : mainPlanner.targetsAt(t.pos())) {
+				if (m.phase() == t.phase()
+						&& StateRules.constructionEquivalent(m.state(),
+								t.state())
+						&& Planner.phaseAllowed(m.phase(), config.fluidsEnabled,
+								config.activationEnabled)) {
+					mainPlanner.markVerified(m);
+				}
+			}
+		}
 	}
 
 	private void tickAudit(Minecraft mc, LocalPlayer player) {
@@ -2507,6 +2562,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 				}
 				List<String> notes = verifier.runtimeNotes();
 				verifyReset();
+				clearRepairRun(); // hand the main planner back for introspection
 				progress.discard(); // build verified complete — nothing to resume
 				state = RunState.COMPLETE;
 				releaseInputs();
@@ -2670,6 +2726,11 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 					|| d.kind() == dev.litebuild.plan.RepairPolicy.Kind.REPLACE) {
 				breakQueue.addLast(d);
 			}
+		}
+		if (!repairMode) {
+			mainPlanner = planner;
+		} else if (repairPlanner != null) {
+			syncRepairVerified(); // keep marks of the previous round
 		}
 		repairPlanner = new Planner(new Blueprint(blueprint.name() + "/repair",
 				Map.copyOf(subset), Set.of(), 0, fingerprint));

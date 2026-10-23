@@ -36,6 +36,7 @@ import dev.litebuild.model.Blueprint;
 import dev.litebuild.model.VerificationMismatch;
 import dev.litebuild.nav.LevelNavWorld;
 import dev.litebuild.nav.NavWorld;
+import dev.litebuild.model.Phase;
 import dev.litebuild.state.StateRules;
 
 /**
@@ -105,6 +106,13 @@ public final class RepairPolicy {
 									"Primary half also missing — place together")
 							: Decision.manual(m,
 									"Dependent half cannot be placed alone");
+				}
+				// An unauthorized-phase cell (lever, observer, ...) must not
+				// be auto-placed by a repair round — it stays pending until
+				// the user enables that phase.
+				if (StateRules.phaseOf(expected) == Phase.ACTIVATION
+						&& !activationEnabled) {
+					return Decision.manual(m, "Enable activation");
 				}
 				return Decision.of(m, Kind.FILL, "Place missing block");
 			}
