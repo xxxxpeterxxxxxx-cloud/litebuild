@@ -7,7 +7,9 @@ No world edits. No silent aim. No teleporting. No packet tricks. LiteBuild walks
 ## What it does
 
 - **Imports everything Litematica can read** — `.litematic`, `.schem` (Sponge), `.schematic`, vanilla structure `.nbt`. Loading and conversion run through Litematica's own pipeline; LiteBuild never reimplements a format.
-- **Builds in dependency-aware phases**: structure → attachments → mechanisms → fluids → activation. Water-logged solids go in dry first; water is poured as a separate task once containment is verified.
+- **Builds in dependency-aware phases**: structure → attachments → mechanisms → fluids → activation — layer by layer, bottom-up. Waterlogged solids go in dry first; water is poured as a separate task once containment is verified.
+- **Remembers verified work**: progress is persisted per world + schematic fingerprint and only resumed after live revalidation — restarts never re-place or re-break what is already correct.
+- **Preflight report** before the first block: missing materials, manual tasks, risks and required toggles.
 - **Moves like a player**: A* pathfinding over collision-checked stances, smooth capped rotations, real sprint on long legs, one coherent saccade per look target then a still head — no radar scanning, no jitter formulas.
 - **Works in smart batches**: straight rows and reachable patches get placed from a single good stance (up to 8 confirmed placements before relocating) instead of the walk-one-place-one crawl.
 - **Uses your real inventory**: hotbar switching plus refills from the main inventory via normal swap clicks — with short human-level settle delays and no touchy-feely with your armor or offhand.
@@ -28,7 +30,7 @@ The build also pauses automatically on manual input, opened GUIs, focus loss, da
 
 A native status panel (four corners, scale, opacity, compact mode — all configurable) shows blueprint, state, phase, progress, current target, pause reasons and active supports. The settings screen (G → Settings) covers six tabs: building, timings, look, movement, pauses and HUD — validated, saved atomically, sane defaults for everything.
 
-> **Note:** the mod's in-game texts are currently German (the original target audience). English localization is on the 1.0 roadmap.
+> Works on **Linux, Windows and macOS** — pure Java, no platform-specific code. Forge/NeoForge is not possible: Litematica and MaLiLib only exist for Fabric.
 
 ## Installation
 
