@@ -17,6 +17,7 @@ DRY = "--dry-run" in sys.argv
 
 candidates = sorted(glob.glob(os.path.join(ROOT, "build/libs/litebuild-*.jar")),
                     key=os.path.getmtime)
+candidates = [c for c in candidates if "-sources" not in c and "-dev" not in c]
 jar = args[0] if args else (candidates[-1] if candidates else
                             os.path.join(ROOT, "build/libs/litebuild-0.1.0-beta.7.jar"))
 version = os.path.basename(jar).replace("litebuild-", "").replace(".jar", "")
@@ -46,7 +47,7 @@ def main():
         "version_type": "beta",
         "loaders": ["fabric"],
         "featured": True,
-        "project_id": None,  # resolved via slug endpoint
+        "project_id": "3q4jRlsH",  # modrinth.com/mod/litebuild
         "file_parts": ["file"],
         "primary_file": "file",
     }
