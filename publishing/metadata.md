@@ -1,4 +1,4 @@
-# Publishing metadata — GentleBuild
+# Publishing metadata — LiteBuild
 
 Reference for filling out the project pages. Texts live per platform in
 `modrinth/` and `curseforge/`.
@@ -7,8 +7,8 @@ Reference for filling out the project pages. Texts live per platform in
 
 | Field | Value |
 |---|---|
-| Name | GentleBuild |
-| Slug | `gentlebuild` |
+| Name | LiteBuild |
+| Slug | `litebuild` |
 | License | GPL-3.0-or-later |
 | Loader | Fabric |
 | Side | Client only (no server install needed; works on servers via client interaction) |
@@ -16,7 +16,7 @@ Reference for filling out the project pages. Texts live per platform in
 | Java | 25 |
 | Required dependencies | Fabric API (any current), Litematica ≥ 0.28.8, MaLiLib ≥ 0.29.6 |
 | Optional dependencies | — |
-| Issues / Source | `https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild` (GPL → source link is near-mandatory on Modrinth) |
+| Issues / Source | `https://github.com/xxxxpeterxxxxxx-cloud/litebuild` (GPL → source link is near-mandatory on Modrinth) |
 | Donation | `<TODO or empty>` |
 
 ## Platform notes
@@ -24,7 +24,7 @@ Reference for filling out the project pages. Texts live per platform in
 - **OS compatibility**: pure Java/LWJGL — runs on Linux (all distros),
   Windows and macOS wherever Fabric + dependencies run. No
   platform-specific code.
-- **Forge/NeoForge**: not supported. GentleBuild relies on Litematica's
+- **Forge/NeoForge**: not supported. LiteBuild relies on Litematica's
   loading pipeline; Litematica and MaLiLib exist only for Fabric. Say
   this plainly on both pages.
 - **Other MC versions**: each needs matching Litematica/MaLiLib builds;
@@ -71,8 +71,8 @@ Reference for filling out the project pages. Texts live per platform in
 - **Required deps** (mark as "Required Dependency" on every file
   upload): Fabric API, Litematica, MaLiLib — link the CF projects so the
   CF launcher pulls them in.
-- **Files**: `gentlebuild-0.1.0-beta.7.jar`, release type `Beta`,
-  display name `GentleBuild 0.1.0-beta.7 (MC 26.2)`.
+- **Files**: `litebuild-0.1.0-beta.7.jar`, release type `Beta`,
+  display name `LiteBuild 0.1.0-beta.7 (MC 26.2)`.
 
 ## Changelog obligation
 
@@ -89,7 +89,7 @@ anticheat guarantee, keep the "serverside rules apply" note.
   Generator: `assets/make_icon_iso.py`, finished in PhotoCraft
   (cyan outer glow + drop shadow).
 - [x] Repository URL in descriptions replaced
-  (`https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild`)
+  (`https://github.com/xxxxpeterxxxxxx-cloud/litebuild`)
 - [ ] License file (`LICENSE`, GPL-3.0) shipped with the JAR / linked
 - [ ] Gallery screenshots contain no sensitive info
 - [ ] Beta label clear (no "stable" in the title)

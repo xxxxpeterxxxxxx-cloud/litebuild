@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds gentlebuild-faults.jar with plain javac (no Gradle).
+# Builds litebuild-faults.jar with plain javac (no Gradle).
 # Classpath: the official 26.2 server jar (shipped with Mojang names),
 # the game's bundled libraries, Fabric Loader, the needed Fabric API
 # modules and sponge-mixin annotations.
@@ -23,12 +23,12 @@ mkdir -p build/classes
 find src -name "*.java" > build/sources.txt
 "$JAVAC" --release 21 -encoding UTF-8 -cp "$CP" -d build/classes @build/sources.txt
 
-OUT="build/gentlebuild-faults.jar"
+OUT="build/litebuild-faults.jar"
 rm -f "$OUT"
 "$JAR" --create --file "$OUT" \
     -C build/classes . \
     -C src fabric.mod.json \
-    -C src gentlebuild-faults.mixins.json
+    -C src litebuild-faults.mixins.json
 
 mkdir -p ../mods
 cp "$OUT" ../mods/

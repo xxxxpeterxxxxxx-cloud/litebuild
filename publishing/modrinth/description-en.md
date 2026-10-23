@@ -1,12 +1,12 @@
-# GentleBuild
+# LiteBuild
 
-**GentleBuild builds your Litematica schematics the slow, honest way — with the same mouse, keyboard and packets a human player would use.**
+**LiteBuild builds your Litematica schematics the slow, honest way — with the same mouse, keyboard and packets a human player would use.**
 
-No world edits. No silent aim. No teleporting. No packet tricks. GentleBuild walks to each block, turns its head, picks the right item, and clicks — then waits for the server to confirm. It's a builder, not a cheat engine, and it's designed so its wire traffic stays inside vanilla rules.
+No world edits. No silent aim. No teleporting. No packet tricks. LiteBuild walks to each block, turns its head, picks the right item, and clicks — then waits for the server to confirm. It's a builder, not a cheat engine, and it's designed so its wire traffic stays inside vanilla rules.
 
 ## What it does
 
-- **Imports everything Litematica can read** — `.litematic`, `.schem` (Sponge), `.schematic`, vanilla structure `.nbt`. Loading and conversion run through Litematica's own pipeline; GentleBuild never reimplements a format.
+- **Imports everything Litematica can read** — `.litematic`, `.schem` (Sponge), `.schematic`, vanilla structure `.nbt`. Loading and conversion run through Litematica's own pipeline; LiteBuild never reimplements a format.
 - **Builds in dependency-aware phases**: structure → attachments → mechanisms → fluids → activation. Water-logged solids go in dry first; water is poured as a separate task once containment is verified.
 - **Moves like a player**: A* pathfinding over collision-checked stances, smooth capped rotations, real sprint on long legs, one coherent saccade per look target then a still head — no radar scanning, no jitter formulas.
 - **Works in smart batches**: straight rows and reachable patches get placed from a single good stance (up to 8 confirmed placements before relocating) instead of the walk-one-place-one crawl.
@@ -20,7 +20,7 @@ No world edits. No silent aim. No teleporting. No packet tricks. GentleBuild wal
 
 - **G** — control panel (blueprint, start/pause/stop, verify+fix, cleanup, fluids/activation gates, settings)
 - **H** — pause / emergency stop
-- `/gb` (`/gentlebuild`) — `select`, `load <file>`, `start`, `pause`, `stop`, `status`, `materials`, `issues`, `fluids`, `activate`, `cleanup`
+- `/lb` (`/litebuild`) — `select`, `load <file>`, `start`, `pause`, `stop`, `status`, `materials`, `issues`, `fluids`, `activate`, `cleanup`
 
 The build also pauses automatically on manual input, opened GUIs, focus loss, damage, low health, riding/flying, world changes or a moved placement.
 
@@ -34,7 +34,7 @@ A native status panel (four corners, scale, opacity, compact mode — all config
 
 1. **Fabric Loader 0.19.5+** for Minecraft **26.2**
 2. Required mods: **Fabric API**, **Litematica ≥ 0.28.8**, **MaLiLib ≥ 0.29.6**
-3. Drop `gentlebuild-*.jar` into `mods/`
+3. Drop `litebuild-*.jar` into `mods/`
 4. **Java 25** required (same as the game itself)
 
 ## Honest limitations
@@ -46,5 +46,5 @@ A native status panel (four corners, scale, opacity, compact mode — all config
 
 ## Support & source
 
-- Source, issues and validation evidence: **https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild**
+- Source, issues and validation evidence: **https://github.com/xxxxpeterxxxxxx-cloud/litebuild**
 - License: **GPL-3.0-or-later**

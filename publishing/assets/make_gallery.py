@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compose GentleBuild project icon + professional gallery cards.
+"""Compose LiteBuild project icon + professional gallery cards.
 
 Icon: crop watermark, square, 512x512.
 Cards: 1600x900, dark gradient, accent bar, EN headline + sub,
@@ -97,9 +97,9 @@ def card(shot_path, headline, sub, out_name, icon_img=None):
         ic = icon_img.resize((44, 44), Image.NEAREST)
         ic = rounded(ic, 10)
         bg.alpha_composite(ic, (80, my - 8))
-        bd.text((138, my - 4), "GentleBuild", font=F_MARK, fill=WHITE)
+        bd.text((138, my - 4), "LiteBuild", font=F_MARK, fill=WHITE)
     else:
-        bd.text((80, my - 4), "GentleBuild", font=F_MARK, fill=WHITE)
+        bd.text((80, my - 4), "LiteBuild", font=F_MARK, fill=WHITE)
     # tag right
     tag = "CLIENT-SIDE • FABRIC 26.2"
     tw = bd.textlength(tag, font=F_TAG)
@@ -130,7 +130,7 @@ def make_hero(icon):
     bg.alpha_composite(ic, (W // 2 - 192, 128))
 
     d = ImageDraw.Draw(bg)
-    t = "GentleBuild"
+    t = "LiteBuild"
     f_title = font(700, 108)
     tw = d.textlength(t, font=f_title)
     d.text(((W - tw) / 2, 540), t, font=f_title, fill=WHITE)
@@ -149,23 +149,23 @@ if __name__ == "__main__":
     icon = load_icon()
 
     g = lambda n: os.path.join(GALLERY, n)
-    card(g("0013_gentlebuild-scale-complete.png"),
+    card(g("0013_litebuild-scale-complete.png"),
          "Verifies its own work",
          "Two-pass final audit, incremental checkpoints — done only when the server says so",
          "gallery-verify.png", icon)
-    card(g("0024_gentlebuild-hard-complete.png"),
+    card(g("0024_litebuild-hard-complete.png"),
          "Phases that respect dependencies",
          "Structure › attachments › mechanisms › fluids › activation",
          "gallery-phases.png", icon)
-    card(g("0015_gentlebuild-scenario2-built.png"),
+    card(g("0015_litebuild-scenario2-built.png"),
          "Scaffolds over real gaps",
          "Temporary supports only where needed — removed with real mining afterwards",
          "gallery-scaffold.png", icon)
-    card(g("0023_gentlebuild-speed-row18.png"),
+    card(g("0023_litebuild-speed-row18.png"),
          "Smart batching, not crawling",
          "Whole rows from one stance — up to 8 confirmed placements before relocating",
          "gallery-batch.png", icon)
-    card(g("0021_gentlebuild-speed-sprint.png"),
+    card(g("0021_litebuild-speed-sprint.png"),
          "Sprints when it makes sense",
          "Real sprint input on long safe legs — never faster than a player could be",
          "gallery-sprint.png", icon)
@@ -177,7 +177,7 @@ if __name__ == "__main__":
          "Everything is configurable",
          "Scaffold blocks, timings, head movement, pauses, checkpoints, HUD — drafts validated on save",
          "gallery-settings.png", icon)
-    card(g("0017_gentlebuild-scenario2-cleaned.png"),
+    card(g("0017_litebuild-scenario2-cleaned.png"),
          "Cleans up after itself",
          "Own scaffolding removed; foreign or changed blocks are never touched",
          "gallery-cleanup.png", icon)

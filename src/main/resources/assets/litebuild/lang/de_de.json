@@ -1,0 +1,8 @@
+{
+	"key.litebuild.open": "LiteBuild-Bedienfenster",
+	"key.litebuild.pause": "LiteBuild pausieren",
+	"key.categories.litebuild.main": "LiteBuild",
+	"category.litebuild.main": "LiteBuild",
+	"modmenu.nameTranslation.litebuild": "LiteBuild",
+	"modmenu.descriptionTranslation.litebuild": "Baut Litematica-Bauplaene Schritt fuer Schritt mit normalen Client-Interaktionen."
+}

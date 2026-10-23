@@ -1,4 +1,4 @@
-# GentleBuild 0.1.0-beta.7
+# LiteBuild 0.1.0-beta.7
 
 ## Highlights
 
@@ -7,7 +7,7 @@
 - **Layer-by-layer building** — new `layerByLayer` option (default on)
   builds bottom-up instead of hopping between heights.
 - **Progress persistence** — verified cells persist across restarts in
-  `config/gentlebuild-progress/` with a content fingerprint; resume only
+  `config/litebuild-progress/` with a content fingerprint; resume only
   after live revalidation against the world.
 - **Preflight report** — G → Preflight lists missing materials, manual
   tasks (sign text, container contents, entities), risks and required

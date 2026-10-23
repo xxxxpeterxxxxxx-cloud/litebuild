@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# verify.sh — reproduzierbares Release-Gate für GentleBuild.
+# verify.sh — reproduzierbares Release-Gate für LiteBuild.
 #
 # Ein einziges Kommando führt den vollständigen Verifikationslauf aus:
 #

@@ -1,8 +1,8 @@
-# GentleBuild
+# LiteBuild
 
-**GentleBuild baut deine Litematica-Baupläne langsam und ehrlich — mit denselben Eingaben und Paketen wie ein menschlicher Spieler.**
+**LiteBuild baut deine Litematica-Baupläne langsam und ehrlich — mit denselben Eingaben und Paketen wie ein menschlicher Spieler.**
 
-Keine Welt-Edits. Kein Silent Aim. Kein Teleport. Keine Paket-Tricks. GentleBuild läuft zu jedem Block, dreht den Kopf, wählt das richtige Item und klickt — dann wartet es auf die Server-Bestätigung. Es ist ein Baubot, kein Cheat, und sein Netzwerkverkehr bleibt innerhalb der Vanilla-Regeln.
+Keine Welt-Edits. Kein Silent Aim. Kein Teleport. Keine Paket-Tricks. LiteBuild läuft zu jedem Block, dreht den Kopf, wählt das richtige Item und klickt — dann wartet es auf die Server-Bestätigung. Es ist ein Baubot, kein Cheat, und sein Netzwerkverkehr bleibt innerhalb der Vanilla-Regeln.
 
 ## Was der Mod tut
 
@@ -20,7 +20,7 @@ Keine Welt-Edits. Kein Silent Aim. Kein Teleport. Keine Paket-Tricks. GentleBuil
 
 - **G** — Bedienfenster (Bauplan, Start/Pause/Stopp, Prüfen+Fixen, Stützenabbau, Fluid-/Aktivierungs-Freigaben, Einstellungen)
 - **H** — Pausieren / Notstopp
-- `/gb` (`/gentlebuild`) — `select`, `load <datei>`, `start`, `pause`, `stop`, `status`, `materials`, `issues`, `fluids`, `activate`, `cleanup`
+- `/lb` (`/litebuild`) — `select`, `load <datei>`, `start`, `pause`, `stop`, `status`, `materials`, `issues`, `fluids`, `activate`, `cleanup`
 
 Der Bau pausiert automatisch bei manueller Eingabe, geöffneten GUIs, Fokusverlust, Schaden, niedriger Gesundheit, Reiten/Fliegen, Weltenwechsel und verändertem Placement.
 
@@ -32,7 +32,7 @@ Eine native Statusanzeige (vier Ecken, Skalierung, Deckkraft, Kompaktmodus — a
 
 1. **Fabric Loader 0.19.5+** für Minecraft **26.2**
 2. Benötigte Mods: **Fabric API**, **Litematica ≥ 0.28.8**, **MaLiLib ≥ 0.29.6**
-3. `gentlebuild-*.jar` nach `mods/`
+3. `litebuild-*.jar` nach `mods/`
 4. **Java 25** wird benötigt
 
 ## Ehrliche Grenzen
@@ -44,5 +44,5 @@ Eine native Statusanzeige (vier Ecken, Skalierung, Deckkraft, Kompaktmodus — a
 
 ## Quellcode & Lizenz
 
-- Quellcode, Issues und Validierungsbelege: **https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild**
+- Quellcode, Issues und Validierungsbelege: **https://github.com/xxxxpeterxxxxxx-cloud/litebuild**
 - Lizenz: **GPL-3.0-or-later**

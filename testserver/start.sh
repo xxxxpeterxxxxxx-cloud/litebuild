@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Starts the GentleBuild fault-injection test server (Fabric, MC 26.2).
+# Starts the LiteBuild fault-injection test server (Fabric, MC 26.2).
 # Java 25 is required; override JAVA_HOME if needed.
 set -euo pipefail
 cd "$(dirname "$0")"

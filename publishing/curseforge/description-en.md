@@ -1,8 +1,8 @@
-# GentleBuild
+# LiteBuild
 
-**GentleBuild builds your Litematica schematics the slow, honest way — with the same mouse, keyboard and packets a human player would use.**
+**LiteBuild builds your Litematica schematics the slow, honest way — with the same mouse, keyboard and packets a human player would use.**
 
-No world edits. No silent aim. No teleporting. No packet tricks. GentleBuild walks to each block, turns its head, picks the right item, and clicks — then waits for the server to confirm. It's a builder, not a cheat engine, and its wire traffic stays inside vanilla rules.
+No world edits. No silent aim. No teleporting. No packet tricks. LiteBuild walks to each block, turns its head, picks the right item, and clicks — then waits for the server to confirm. It's a builder, not a cheat engine, and its wire traffic stays inside vanilla rules.
 
 ## What it does
 
@@ -19,7 +19,7 @@ No world edits. No silent aim. No teleporting. No packet tricks. GentleBuild wal
 ## Controls
 
 - **G** — control panel · **H** — pause / emergency stop
-- `/gb` — `select`, `load <file>`, `start`, `pause`, `stop`, `status`, `materials`, `issues`, `fluids`, `activate`, `cleanup`
+- `/lb` — `select`, `load <file>`, `start`, `pause`, `stop`, `status`, `materials`, `issues`, `fluids`, `activate`, `cleanup`
 
 Auto-pauses on manual input, open GUIs, focus loss, damage, low health, riding/flying, world changes or moved placements.
 
@@ -42,5 +42,5 @@ Configurable status panel (corner, scale, opacity, compact) plus a settings scre
 - Intentionally slower than creative paste tools — legal interactions only.
 - The test suite audits the packet stream against vanilla invariants (≤45°/tick rotation, vanilla reach, packet order, no double-use). Strong evidence, not a guarantee: **where a server forbids build bots, this mod is not allowed.**
 
-- Source & issues: **https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild**
+- Source & issues: **https://github.com/xxxxpeterxxxxxx-cloud/litebuild**
 - License: **GPL-3.0-or-later**

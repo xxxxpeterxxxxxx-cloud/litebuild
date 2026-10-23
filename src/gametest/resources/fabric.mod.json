@@ -1,32 +1,32 @@
 {
 	"schemaVersion": 1,
-	"id": "gentlebuild-test",
+	"id": "litebuild-test",
 	"version": "1.0.0",
-	"name": "GentleBuild Tests",
+	"name": "LiteBuild Tests",
 	"environment": "*",
 	"depends": {
-		"gentlebuild": "*"
+		"litebuild": "*"
 	},
 	"entrypoints": {
 		"fabric-client-gametest": [
-			"dev.gentlebuild.gametest.GentleBuildGameTest",
-			"dev.gentlebuild.gametest.GentleBuildInventoryTest",
-			"dev.gentlebuild.gametest.GentleBuildRepairTest",
-			"dev.gentlebuild.gametest.GentleBuildScenario2Test",
-			"dev.gentlebuild.gametest.GentleBuildSpeedTest",
-			"dev.gentlebuild.gametest.GentleBuildHardTest",
-			"dev.gentlebuild.gametest.GentleBuildCheckpointTest",
-			"dev.gentlebuild.gametest.GentleBuildUiTest",
-			"dev.gentlebuild.gametest.GentleBuildAckTest",
-			"dev.gentlebuild.gametest.GentleBuildImportTest",
-			"dev.gentlebuild.gametest.GentleBuildStallTest",
-			"dev.gentlebuild.gametest.GentleBuildScaleTest",
-			"dev.gentlebuild.gametest.GentleBuildSchemTest",
-			"dev.gentlebuild.gametest.GentleBuildRewriteAckTest",
-			"dev.gentlebuild.gametest.GentleBuildBigBuildTest"
+			"dev.litebuild.gametest.LiteBuildGameTest",
+			"dev.litebuild.gametest.LiteBuildInventoryTest",
+			"dev.litebuild.gametest.LiteBuildRepairTest",
+			"dev.litebuild.gametest.LiteBuildScenario2Test",
+			"dev.litebuild.gametest.LiteBuildSpeedTest",
+			"dev.litebuild.gametest.LiteBuildHardTest",
+			"dev.litebuild.gametest.LiteBuildCheckpointTest",
+			"dev.litebuild.gametest.LiteBuildUiTest",
+			"dev.litebuild.gametest.LiteBuildAckTest",
+			"dev.litebuild.gametest.LiteBuildImportTest",
+			"dev.litebuild.gametest.LiteBuildStallTest",
+			"dev.litebuild.gametest.LiteBuildScaleTest",
+			"dev.litebuild.gametest.LiteBuildSchemTest",
+			"dev.litebuild.gametest.LiteBuildRewriteAckTest",
+			"dev.litebuild.gametest.LiteBuildBigBuildTest"
 		]
 	},
 	"mixins": [
-		"gentlebuild-test.mixins.json"
+		"litebuild-test.mixins.json"
 	]
 }

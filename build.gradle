@@ -27,7 +27,7 @@ loom {
 fabricApi {
 	configureTests {
 		createSourceSet = true
-		modId = 'gentlebuild-test'
+		modId = 'litebuild-test'
 		enableGameTests = false
 		enableClientGameTests = true
 		clearRunDirectory = true

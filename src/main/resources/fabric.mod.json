@@ -1,19 +1,19 @@
 {
 	"schemaVersion": 1,
-	"id": "gentlebuild",
+	"id": "litebuild",
 	"version": "${version}",
-	"name": "GentleBuild",
+	"name": "LiteBuild",
 	"description": "Builds Litematica blueprints step by step using ordinary, rules-compliant player interactions.",
-	"authors": ["GentleBuild"],
+	"authors": ["LiteBuild"],
 	"license": "GPL-3.0-or-later",
 	"environment": "client",
 	"entrypoints": {
 		"client": [
-			"dev.gentlebuild.GentleBuildClient"
+			"dev.litebuild.LiteBuildClient"
 		]
 	},
 	"mixins": [
-		"gentlebuild.mixins.json"
+		"litebuild.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.19.5",

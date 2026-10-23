@@ -1,0 +1,8 @@
+{
+	"key.litebuild.open": "LiteBuild control screen",
+	"key.litebuild.pause": "Pause LiteBuild",
+	"key.categories.litebuild.main": "LiteBuild",
+	"category.litebuild.main": "LiteBuild",
+	"modmenu.nameTranslation.litebuild": "LiteBuild",
+	"modmenu.descriptionTranslation.litebuild": "Builds Litematica blueprints step by step using ordinary client interactions."
+}

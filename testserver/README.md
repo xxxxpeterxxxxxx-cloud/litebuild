@@ -1,7 +1,7 @@
-# GentleBuild standalone test server (Minecraft 26.2)
+# LiteBuild standalone test server (Minecraft 26.2)
 
 Local dedicated-server harness for the release-roadmap item *"Eigenständige
-Server testen"*: GentleBuild is exercised against a **real** server with
+Server testen"*: LiteBuild is exercised against a **real** server with
 injected faults (latency, packet loss, suppressed block acks, TPS stalls,
 rollbacks, disconnects, chunk reloads) instead of a test-mixin gate.
 
@@ -14,7 +14,7 @@ Everything in this directory is gitignored and safe to delete/rebuild.
 | `server.jar` | Official Mojang 26.2 server (sha1 `823e2250d24b3ddac457a60c92a6a941943fcd6a`, from `version_manifest_v2.json` -> `26.2.json` -> `downloads.server.url`) |
 | `fabric-server-mc.26.2-loader.0.19.5-launcher.1.1.2.jar` | Official Fabric server launcher (meta.fabricmc.net), loader 0.19.5 = the version pinned in `gradle.properties` |
 | `mods/fabric-api-0.161.0+26.2.jar` | Fabric API, same version as `gradle.properties` (server-side dep of the instrumentation mod) |
-| `mods/gentlebuild-faults.jar` | The fault-injection mod, built by `instrumentation/build.sh` |
+| `mods/litebuild-faults.jar` | The fault-injection mod, built by `instrumentation/build.sh` |
 | `instrumentation/` | javac-built mini mod (no Gradle): `/fault` commands + a `Connection` mixin that drops/delays packets |
 | `tools/LagProxy.java` | Single-file TCP proxy for true network latency/jitter/loss + hard disconnects |
 | `eula.txt` | EULA accepted for this local harness |
@@ -37,7 +37,7 @@ prints `Done`. Stop with `stop` in the console.
 ## Join with a client
 
 - Multiplayer -> Direct Connection -> `localhost:25565` (or add server).
-- `online-mode=false`, so any 26.2 client with GentleBuild + Litematica
+- `online-mode=false`, so any 26.2 client with LiteBuild + Litematica
   works; the account name does not matter.
 - Players join in creative mode (flat world, no mobs). `/fault` is usable
   by everyone (and from the server console) — this is a dedicated test
@@ -50,19 +50,19 @@ prints `Done`. Stop with `stop` in the console.
 Two layers:
 
 1. **`/fault ...`** (in-game or server console) — protocol-level faults
-   injected by `gentlebuild-faults.jar` via a mixin on
+   injected by `litebuild-faults.jar` via a mixin on
    `net.minecraft.network.Connection` plus a per-tick scheduler.
 2. **`tools/LagProxy.java`** — wire-level faults a server-side mod cannot
    reproduce faithfully (propagation delay, retransmit stalls).
 
-### `/fault` commands (gentlebuild-faults mod)
+### `/fault` commands (litebuild-faults mod)
 
 | Command | Effect | Simulates |
 | --- | --- | --- |
 | `/fault` / `/fault status` | Show active faults + packet counters (ok / delayed / dropped / in-dropped) | — |
 | `/fault delay <ms>` | Hold every clientbound packet `<ms>` in a send queue | Server-side send latency (affects acks too) |
 | `/fault ackdelay <ms>` | Delay only ack packets (`ClientboundBlockUpdatePacket`, `ClientboundSectionBlocksUpdatePacket`, `ClientboundContainerSetSlotPacket`) | Late confirmations |
-| `/fault ackdrop <pct>` | Drop `<pct>`% of those ack packets | Suppressed/lost confirmations — the GentleBuildAckTest scenario against a real server |
+| `/fault ackdrop <pct>` | Drop `<pct>`% of those ack packets | Suppressed/lost confirmations — the LiteBuildAckTest scenario against a real server |
 | `/fault drop <pct>` | Drop `<pct>`% of **all** clientbound play packets | Outbound packet loss |
 | `/fault dropin <pct>` | Drop `<pct>`% of **all** serverbound play packets | Client->server loss: block-use packets never arrive, no ack is ever sent |
 | `/fault stall <ms> [ticks]` | `Thread.sleep(ms)` inside every server tick for `[ticks]` (default 100) | Overloaded server / TPS drop while the game loop still "runs" |
@@ -102,7 +102,7 @@ holds) — the observable effect is identical: delayed acks.
 ## Suggested test sequence
 
 1. `./start.sh`, join `localhost:25565`.
-2. `/fault snapshot` before letting GentleBuild build; start a small
+2. `/fault snapshot` before letting LiteBuild build; start a small
    Litematica build.
 3. Baseline: no faults — build must COMPLETE normally.
 4. `/fault ackdelay 400` — expect slower but still-completing build;
@@ -110,7 +110,7 @@ holds) — the observable effect is identical: delayed acks.
 5. `/fault ackdrop 50` — expect bounded retries, requeues or honest
    MANUAL/PAUSED, **never** COMPLETE without verified placements.
 6. `/fault snapshot` -> build -> `/fault rollback` — placed blocks are
-   reverted server-side; GentleBuild must re-place or mark MANUAL, not
+   reverted server-side; LiteBuild must re-place or mark MANUAL, not
    trust stale predictions.
 7. `/fault stall 150 200` or `/tick rate 5` — degraded TPS; pacing must
    degrade gracefully, no placement spam.
@@ -125,7 +125,7 @@ holds) — the observable effect is identical: delayed acks.
     for true network latency, plus `kick` on the proxy for connection
     loss that is not a clean server-side disconnect.
 
-## Expected GentleBuild behaviour (pass criteria)
+## Expected LiteBuild behaviour (pass criteria)
 
 - **Bounded retries**: a missing or contradictory ack triggers a finite
   number of retries/requeues, then the cell escalates to MANUAL.
@@ -156,7 +156,7 @@ Fabric API module jars needed for `CommandRegistrationCallback` /
 
 ## Known limits / what stays manual
 
-- The actual client join + GentleBuild build runs are **manual** — this
+- The actual client join + LiteBuild build runs are **manual** — this
   harness only provides the server side and the fault controls.
 - `/fault rollback` restores block states, not block entities or
   entities; snapshots are per-dimension cubes around players at snapshot

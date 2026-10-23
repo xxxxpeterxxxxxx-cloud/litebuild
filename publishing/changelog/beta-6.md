@@ -1,4 +1,4 @@
-# GentleBuild 0.1.0-beta.6 (Minecraft 26.2, Fabric)
+# LiteBuild 0.1.0-beta.6 (Minecraft 26.2, Fabric)
 
 ## New
 
@@ -21,7 +21,7 @@
 - Invalid scaffold-block text in settings no longer crashes the input
   responder — it now reports a format error instead.
 - Config writes are atomic (temp file + move): a failed save keeps the
-  previous `gentlebuild.json` intact.
+  previous `litebuild.json` intact.
 
 ## Verified
 

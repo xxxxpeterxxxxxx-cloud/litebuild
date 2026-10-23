@@ -1,6 +1,6 @@
-# GentleBuild
+# LiteBuild
 
-GentleBuild is a pure **client-side mod** for Minecraft **26.2** (Fabric) that
+LiteBuild is a pure **client-side mod** for Minecraft **26.2** (Fabric) that
 builds Litematica blueprints step by step using **ordinary player
 interactions** — no direct block placement, no server commands, no teleport,
 no "silent aim", no protocol-level cheats.
@@ -42,7 +42,7 @@ License: **GPL-3.0-or-later** (see `LICENSE`).
   slot. This only works without a foreign container screen and with an
   empty cursor; otherwise the build pauses with a reason instead of
   shifting anything. Armor and the offhand are never touched. After every
-  switch GentleBuild waits briefly until the client shows the target item:
+  switch LiteBuild waits briefly until the client shows the target item:
   200 ms for a hotbar switch, 400 ms for a main-inventory refill. That is
   a check of the local client state, not a server acknowledgement; the
   placement still verifies the item before every click.
@@ -70,7 +70,7 @@ License: **GPL-3.0-or-later** (see `LICENSE`).
   count.
 - **Temporary scaffolds** for unreachable paths (max. 8 per path segment),
   only into previously empty cells, removable via normal mining
-  (`/gb cleanup`), with ownership tracking — foreign blocks are never
+  (`/lb cleanup`), with ownership tracking — foreign blocks are never
   touched. The cleanup is conservative: supports are skipped when they
   carry the player, touch the structure, are out of reach or have been
   changed since placement — remaining supports are reported, not silently
@@ -101,7 +101,7 @@ License: **GPL-3.0-or-later** (see `LICENSE`).
   after repair, final verification.
   Second scenario: a real dirt column across a gap, a double slab from
   two single placements (items only in the main inventory, real hotbar
-  switching) and an explicit `/gb cleanup` with server-confirmed removal
+  switching) and an explicit `/lb cleanup` with server-confirmed removal
   of the support while the surroundings stay intact.
   Speed scenario: a 1×5 row is built from at most two standing
   positions (station batch) and real sprinting is observed on a >8-block
@@ -124,7 +124,7 @@ the placement click. An external anticheat test is still outstanding.
 
 - Key **G** (configurable): control screen
 - Key **H** (configurable): pause / emergency stop
-- Commands `/gentlebuild` (alias `/gb`):
+- Commands `/litebuild` (alias `/lb`):
   `select`, `load <file>`, `start`, `pause`, `stop`, `status`,
   `materials`, `issues`, `fluids`, `activate`, `cleanup`
 
@@ -132,7 +132,7 @@ The build pauses automatically on manual input (WASD/jump/sneak/
 mine/use), open GUIs, focus loss, damage, low health, death,
 riding/flying, world change and a changed placement.
 
-Configuration in `config/gentlebuild.json`, including:
+Configuration in `config/litebuild.json`, including:
 
 ```json
 {
@@ -161,7 +161,7 @@ the control screen (G). `sprintOnLongWalks` lets the player sprint on
 long, clear path segments (normal sprint input, no speed manipulation).
 `minPlaceIntervalTicks` (minimum spacing of two placements, clamp ≥ 2)
 defaults to **3** since beta.4 instead of 6 — existing
-`gentlebuild.json` files keep their stored value. `layerByLayer` orders
+`litebuild.json` files keep their stored value. `layerByLayer` orders
 the target pool bottom-up per layer (default on). `stallAuditTicks`
 (clamp 60–2400) controls how long the build may go without verified
 progress before an audit sweep runs — raise it on very laggy servers.
@@ -176,19 +176,19 @@ automatically when a menu is open and in F1 HUD mode. The previous
 actionbar line is gone.
 
 **Settings (G → Settings):** a draft is only applied with "Save" — an
-atomic write to `gentlebuild.json`, no live changes without a click.
+atomic write to `litebuild.json`, no live changes without a click.
 Invalid entries stay visible and are flagged with a reason; min/max pairs
 are validated together. Fields include `hotbarSwitchTicks`,
 `mainRefillTicks`, `checkpointStructureBlocks`,
 `checkpointSensitiveBlocks`, `stallAuditTicks`, `layerByLayer`,
 `hudEnabled`, `hudCorner`, `hudCompact`, `hudScale`, `hudOpacity`. Older
-`gentlebuild.json` files without these fields get the defaults.
+`litebuild.json` files without these fields get the defaults.
 
 ### Final check and repair
 
-After the build, GentleBuild checks every blueprint cell (including
+After the build, LiteBuild checks every blueprint cell (including
 required AIR cells) in two complete passes. Deviations are reported with
-types (`/gb status`; "Verify + Fix" or `/gb verify` also starts the check
+types (`/lb status`; "Verify + Fix" or `/lb verify` also starts the check
 manually). If `automaticRepairs` is active (default, limit
 `maxRepairRounds`, 1–5), only provably safe, owned mistakes are corrected
 automatically: re-placing missing blocks, adjusting delay/switch states
@@ -213,7 +213,7 @@ have succeeded.
 
 1. Fabric Loader **0.19.5+** for Minecraft **26.2**
 2. Mods: `fabric-api-0.161.0+26.2`, `litematica-fabric-26.2-0.28.8`,
-   `malilib-fabric-26.2-0.29.6`, `gentlebuild-0.1.0-beta.7.jar`
+   `malilib-fabric-26.2-0.29.6`, `litebuild-0.1.0-beta.7.jar`
 3. Java **25** is required.
 
 Compatibility: `fabric.mod.json` allows `~26.2` (all 26.2.x patches),
@@ -222,7 +222,7 @@ The mod is pure Java/LWJGL code and runs on Linux, Windows and macOS
 wherever Fabric and the dependencies run — there is no platform-specific
 code. Other Minecraft major versions each need matching
 Litematica/MaLiLib builds and are not covered. Forge/NeoForge are not
-supported: GentleBuild relies on Litematica's loading pipeline, and
+supported: LiteBuild relies on Litematica's loading pipeline, and
 Litematica/MaLiLib only exist for Fabric.
 
 ## Building from source
@@ -231,8 +231,8 @@ Litematica/MaLiLib only exist for Fabric.
 ./gradlew build
 ```
 
-Produces `build/libs/gentlebuild-0.1.0-beta.7.jar` and
-`gentlebuild-0.1.0-beta.7-sources.jar`. JDK 25 is required via the
+Produces `build/libs/litebuild-0.1.0-beta.7.jar` and
+`litebuild-0.1.0-beta.7-sources.jar`. JDK 25 is required via the
 Java toolchain (e.g. `JAVA_HOME` or Gradle auto-detection;
 no project-specific paths in `gradle.properties`).
 

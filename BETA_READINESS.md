@@ -1,4 +1,4 @@
-# GentleBuild: path to a stable 1.0
+# LiteBuild: path to a stable 1.0
 
 Status: 22 October 2026 (updated after beta.6). Prioritized list of
 remaining release work; completed evidence is marked as such.
@@ -14,17 +14,17 @@ All eight original gametest classes passed in a single run
 Together twelve registered classes plus the unit suite. Evidence in
 `validation/run75-beta6-gate/` and `validation/run77-new-tests/`:
 
-- `GentleBuildAckTest`: delayed and suppressed server acknowledgements
+- `LiteBuildAckTest`: delayed and suppressed server acknowledgements
   via a test packet gate; no completion without acknowledgement, bounded
   pause instead of an endless loop, clean completion after release.
-- `GentleBuildImportTest`: real `.litematic` file round-trip, rotation
+- `LiteBuildImportTest`: real `.litematic` file round-trip, rotation
   and mirroring, multiple and negative subregions, vanilla structure
   `.nbt` via `convertStructureToLitematicaSchematic`, overlap conflict
   as an issue. Gap: `.schematic` only has a stub writer upstream;
   `.schem` (Sponge) was not yet file-tested at that point.
-- `GentleBuildStallTest`: an unsolvable target ends bounded as MANUAL
+- `LiteBuildStallTest`: an unsolvable target ends bounded as MANUAL
   with a coordinate, terminal state PAUSED, other cells finish.
-- `GentleBuildScaleTest`: 239-cell build with H-pause and resume to
+- `LiteBuildScaleTest`: 239-cell build with H-pause and resume to
   COMPLETE (~4600 ticks, ~270 s, +141 MB heap) plus `PlannerScaleTest`
   (7,232 targets, sweep < 2 s) as a unit test.
 - `scripts/verify.sh`: documented single command for units, all
@@ -40,7 +40,7 @@ an external anticheat test.
 | --- | --- | --- | --- |
 | P0 | Server acknowledgement and timeout behavior | **Proven** (AckTest + RewriteAckTest) | Delayed, suppressed, contradictory (REWRITE: server reports a different state → no completion, bounded PAUSED with coordinate, foreign blocks never mined). Only the run against a real server remains open. |
 | P0 | Bound retries and stalls | **Proven** (StallTest) | Unsolvable target → bounded MANUAL + PAUSED with coordinate. |
-| P0 | Test standalone servers | **Infra done, run open** | `testserver/`: real 26.2 server + `gentlebuild-faults` mod (lag/loss/rollback/kick/chunkreload/chaos) + LagProxy. Missing: the actual client run. |
+| P0 | Test standalone servers | **Infra done, run open** | `testserver/`: real 26.2 server + `litebuild-faults` mod (lag/loss/rollback/kick/chunkreload/chaos) + LagProxy. Missing: the actual client run. |
 | P0 | Import and block matrix | **Proven** (ImportTest + SchemTest) | `.schem` (Sponge v2) via file incl. door pair, slab, stairs, waterlogging, repeater, chest block entity. Remaining limit: `.schematic` (upstream stub). |
 | P0 | Reproducible release check | **Proven** (`scripts/verify.sh`) | One command runs units + all registered gametests + JAR and archives evidence. |
 | P0 | Large and long build jobs | **Proven** (PlannerLargeScale 30,510 targets + BigBuild ~1,206 cells with 3× pause/resume) | The real limit remains multi-hour builds; planning and build behavior are checked upward. |
@@ -48,7 +48,7 @@ an external anticheat test.
 
 ### Concrete checkpoint: acknowledgements — mostly proven
 
-`GentleBuildAckTest` suppresses and delays real clientbound updates via a
+`LiteBuildAckTest` suppresses and delays real clientbound updates via a
 test mixin gate so the vanilla prediction is honestly rolled back.
 Result: no verified completion without acknowledgement, bounded timeouts
 with requeue or an understandable pause, correct completion after
@@ -57,26 +57,26 @@ dedicated server.
 
 ### Concrete checkpoint: import — proven for the covered formats
 
-`GentleBuildImportTest` loads a real `.litematic` file through the
-production `GentleBuildCommands.load` dispatch, checks rotated and
+`LiteBuildImportTest` loads a real `.litematic` file through the
+production `LiteBuildCommands.load` dispatch, checks rotated and
 mirrored placements including block states, multiple and negative
 subregions and the `.nbt` structure path through Litematica's
 conversion. Overlap conflicts are reported as CONFLICT issues.
-`GentleBuildSchemTest` covers `.schem` (Sponge v2) via file. Not covered
+`LiteBuildSchemTest` covers `.schem` (Sponge v2) via file. Not covered
 by file: `.schematic` (the Schematica writer is an upstream stub).
 
 ### Concrete checkpoint: size and controls — proven
 
 `PlannerScaleTest` proves bounded sweeps over ~7,200 targets and
-time-constant counters/sorting. `GentleBuildScaleTest` builds ~240 cells
+time-constant counters/sorting. `LiteBuildScaleTest` builds ~240 cells
 with an H emergency stop and resume. The HUD reads only one snapshot per
 frame. Window sizes, keyboard controls, invalid settings and failed
-saves are covered by `GentleBuildUiTest`.
+saves are covered by `LiteBuildUiTest`.
 
 New coverage: `PlannerLargeScaleTest` (unit, **passed**, 30,510 targets
 with exact phase partition, dependent door top halves, double slabs and
 waterlogged slabs; sweep 3.4 s, heap +8 MB, time-constant sorting) and
-`GentleBuildBigBuildTest` (gametest, ~1,206 cells as a 20×15×4 podium
+`LiteBuildBigBuildTest` (gametest, ~1,206 cells as a 20×15×4 podium
 plus a mechanism row, three H pauses/resumes through the real hotkey
 path, [GTBIG] metrics like [GTSCALE]; registered in the manifest,
 **passed** in ~26 min).
@@ -111,7 +111,7 @@ full 1,206 cells after).
    `BuildProgressStore` writes verified cells plus a real content
    fingerprint (SHA-256 over `x,y,z=block[prop=…]` lines, world ID =
    server IP or save directory, dimension, origin) atomically to
-   `config/gentlebuild-progress/`. Resume only on an exact match and only
+   `config/litebuild-progress/`. Resume only on an exact match and only
    after live revalidation of the world (`applyVerified`); deviating
    records are discarded. Unit tests: `BuildProgressStoreTest`; visible
    in the gametest as "Progress restored: N cells revalidated".
@@ -152,7 +152,7 @@ contains a real local server (official Mojang `server.jar` 26.2, sha1
 0.161.0+26.2 as a server mod). Offline mode, flat world,
 `view-distance=5`, `pause-when-empty-seconds=0`. Boot test passed: the
 server starts, the world generates, the instrumentation mod
-`gentlebuild-faults` loads and `/fault` answers.
+`litebuild-faults` loads and `/fault` answers.
 
 Fault injection in two layers:
 
@@ -169,14 +169,14 @@ Fault injection in two layers:
 Vanilla additions: `/tick rate`, `/tick freeze`, `/kick`, teleport far
 away for real chunk unloading. Start, procedure and expectations
 (bounded retries, honest pause, no false completion) are in
-`testserver/README.md`. The actual client run with GentleBuild against
+`testserver/README.md`. The actual client run with LiteBuild against
 this server remains open.
 
 ## Platform compatibility
 
 The mod is pure Java/LWJGL code with no platform-specific paths; it runs
 on Linux (all distributions), Windows and macOS wherever Fabric Loader
-and the dependencies run. Forge/NeoForge are not supported: GentleBuild
+and the dependencies run. Forge/NeoForge are not supported: LiteBuild
 depends on Litematica's schematic loading pipeline, and Litematica and
 MaLiLib only exist for Fabric. Other Minecraft major versions require
 matching Litematica/MaLiLib builds.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GentleBuild icon — Litematica-inspired pixel-art voxel stack.
+"""LiteBuild icon — Litematica-inspired pixel-art voxel stack.
 
 3x3x2 solid stone stack, top layer = cyan wireframe ghost cubes
 (blueprint), two of them already filled solid. Crisp NEAREST upscale.

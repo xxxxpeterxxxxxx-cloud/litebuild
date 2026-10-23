@@ -1,18 +1,18 @@
 {
     "schemaVersion": 1,
-    "id": "gentlebuild-faults",
+    "id": "litebuild-faults",
     "version": "1.0.0",
-    "name": "GentleBuild Fault Injection",
-    "description": "Server-side fault injection for the GentleBuild standalone-server test harness: packet loss/delay, suppressed block acks, TPS stalls, rollbacks, disconnects and chunk reloads, all toggled via /fault.",
+    "name": "LiteBuild Fault Injection",
+    "description": "Server-side fault injection for the LiteBuild standalone-server test harness: packet loss/delay, suppressed block acks, TPS stalls, rollbacks, disconnects and chunk reloads, all toggled via /fault.",
     "environment": "server",
     "license": "GPL-3.0-only",
     "entrypoints": {
         "server": [
-            "dev.gentlebuild.faults.FaultsMod"
+            "dev.litebuild.faults.FaultsMod"
         ]
     },
     "mixins": [
-        "gentlebuild-faults.mixins.json"
+        "litebuild-faults.mixins.json"
     ],
     "depends": {
         "fabricloader": ">=0.19.0",
