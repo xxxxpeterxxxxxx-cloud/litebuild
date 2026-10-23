@@ -117,6 +117,16 @@ targeted cell is excluded; geometric standability is checked by
 `isStanceFree`. Proven by the BigBuild run (wall at ~262/1206 before,
 full 1,206 cells after).
 
+Fourth review finding — **fixed**: the repair progress veto could pause
+on empty evidence. `onAuditMismatch` judged "no progress" from
+`roundApproved`, but resume clears that set while `repairRound` stays
+above zero — so the first audit of a resumed stage (or any round of
+REMOVE-only repairs, whose cells have no expected state in the
+blueprint) was vetoed without ever attempting the approved cells. Fix:
+the veto only applies when the previous round actually dispatched work,
+and REMOVE cells count as done once they read air. Proven by
+`LiteBuildHardTest` reaching COMPLETE at `activation-end` again.
+
 ## Especially worthwhile for longer builds
 
 1. ~~**Persist progress across restarts.**~~ ✓ Implemented:
