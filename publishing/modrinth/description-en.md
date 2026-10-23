@@ -46,5 +46,5 @@ A native status panel (four corners, scale, opacity, compact mode — all config
 
 ## Support & source
 
-- Source, issues and validation evidence: **<TODO: repository URL>**
+- Source, issues and validation evidence: **https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild**
 - License: **GPL-3.0-or-later**

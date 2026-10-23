@@ -16,7 +16,7 @@ in `modrinth/` und `curseforge/`.
 | Java | 25 |
 | Pflicht-Dependencies | Fabric API (beliebig aktuell), Litematica ≥ 0.28.8, MaLiLib ≥ 0.29.6 |
 | Optionale Dependencies | — |
-| Issues / Source | `<TODO: Repository-URL>` (GPL → Source-Link auf Modrinth fast Pflicht) |
+| Issues / Source | `https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild` (GPL → Source-Link auf Modrinth fast Pflicht) |
 | Donation | `<TODO oder leer>` |
 
 ## Modrinth
@@ -73,7 +73,7 @@ Anticheat-Garantie, Hinweis „Serverside rules apply" beibehalten.
 - [ ] **Projekt-Icon** (beide Plattformen Pflicht): quadratisch, Modrinth
   empfiehlt ≥ 512×512 PNG — Idee: stilisiertes Gerüst/Eimer-Block oder
   „GB“-Monogramm; Datei dann im Repo ablegen
-- [ ] Repository-URL in den Beschreibungen ersetzt (`<TODO: Repository-URL>`)
+- [ ] Repository-URL in den Beschreibungen ersetzt (`https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild`)
 - [ ] Lizenz-Datei (`LICENSE`, GPL-3.0) liegt dem JAR bei bzw. ist verlinkt
 - [ ] Galerie-Screenshots ohne sensible Infos
 - [ ] Beta-Label klar (kein „stable" im Titel)

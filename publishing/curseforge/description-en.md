@@ -42,5 +42,5 @@ Configurable status panel (corner, scale, opacity, compact) plus a settings scre
 - Intentionally slower than creative paste tools — legal interactions only.
 - The test suite audits the packet stream against vanilla invariants (≤45°/tick rotation, vanilla reach, packet order, no double-use). Strong evidence, not a guarantee: **where a server forbids build bots, this mod is not allowed.**
 
-- Source & issues: **<TODO: repository URL>**
+- Source & issues: **https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild**
 - License: **GPL-3.0-or-later**

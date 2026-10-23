@@ -44,5 +44,5 @@ Eine native Statusanzeige (vier Ecken, Skalierung, Deckkraft, Kompaktmodus — a
 
 ## Quellcode & Lizenz
 
-- Quellcode, Issues und Validierungsbelege: **<TODO: Repository-URL>**
+- Quellcode, Issues und Validierungsbelege: **https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild**
 - Lizenz: **GPL-3.0-or-later**
