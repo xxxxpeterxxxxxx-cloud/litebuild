@@ -1,0 +1,17 @@
+.gradle/
+/build/
+run/
+logs/
+*.log
+.toolcheck
+toolcheck2.txt
+.idea/
+*.iml
+.classpath
+.project
+bin/
+out/
+
+# test evidence (45M+ logs/screenshots)
+validation/
+testserver/

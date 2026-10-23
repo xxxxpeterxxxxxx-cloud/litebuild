@@ -1,0 +1,8 @@
+{
+	"key.gentlebuild.open": "GentleBuild control screen",
+	"key.gentlebuild.pause": "Pause GentleBuild",
+	"key.categories.gentlebuild.main": "GentleBuild",
+	"category.gentlebuild.main": "GentleBuild",
+	"modmenu.nameTranslation.gentlebuild": "GentleBuild",
+	"modmenu.descriptionTranslation.gentlebuild": "Builds Litematica blueprints step by step using ordinary client interactions."
+}

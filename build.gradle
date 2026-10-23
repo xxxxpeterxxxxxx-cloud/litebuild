@@ -1,0 +1,95 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version '1.17.21'
+	id 'java'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	mavenCentral()
+	maven { url = 'https://api.modrinth.com/maven' }
+}
+
+loom {
+	runs {
+		client {
+			client()
+			runDir "run"
+		}
+	}
+}
+
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = 'gentlebuild-test'
+		enableGameTests = false
+		enableClientGameTests = true
+		clearRunDirectory = true
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+	implementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	implementation "maven.modrinth:litematica:${project.litematica_version}"
+	implementation "maven.modrinth:malilib:${project.malilib_version}"
+
+	testImplementation platform('org.junit:junit-bom:5.11.4')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+	it.options.encoding = 'UTF-8'
+}
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		showStandardStreams = true
+	}
+}
+
+assemble.dependsOn 'sourcesJar'
+
+tasks.register('sourcesJar', Jar) {
+	description = "Assembles a jar containing the source code"
+	archiveClassifier = 'sources'
+	from sourceSets.main.allSource
+}
+
+jar {
+	from('LICENSE')
+	manifest {
+		attributes([
+			'Specification-Title'   : project.mod_name,
+			'Specification-Version': project.mod_version,
+			'Implementation-Title'  : project.mod_name,
+			'Implementation-Version': project.mod_version
+		])
+	}
+}

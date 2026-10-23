@@ -1,0 +1,26 @@
+{
+	"schemaVersion": 1,
+	"id": "gentlebuild",
+	"version": "${version}",
+	"name": "GentleBuild",
+	"description": "Baut Litematica-Bauplaene langsam und regelkonform mit normalen Spielerinteraktionen auf.",
+	"authors": ["GentleBuild"],
+	"license": "GPL-3.0-or-later",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"dev.gentlebuild.GentleBuildClient"
+		]
+	},
+	"mixins": [
+		"gentlebuild.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.2",
+		"fabric-api": "*",
+		"litematica": ">=0.28.8",
+		"malilib": ">=0.29.6",
+		"java": ">=25"
+	}
+}

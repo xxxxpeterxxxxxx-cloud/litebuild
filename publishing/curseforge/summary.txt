@@ -1,0 +1,1 @@
+Builds Litematica blueprints legit: real walking, aiming, clicking and mining with server confirmations. Dependency-aware phases, fluids, verification, repairs, configurable HUD. No cheats.
