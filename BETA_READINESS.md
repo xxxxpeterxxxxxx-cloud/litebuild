@@ -96,6 +96,18 @@ entirely as STRUCTURE under 26.2 `isSolid()` semantics (half slabs and
 dry shells included) — there is no double-slab mis-sorting; the XL test
 constants were corrected accordingly.
 
+Third review finding — **fixed**: auto-verification could bypass phase
+authorization. `BuildProgressStore.applyVerified` and the
+`cellMatchesFinal` branch of the eligibility sweep marked every task of
+a live-matching cell verified — including FLUIDS/ACTIVATION tasks while
+those phases were disabled. A stored progress record revalidated against
+a preexisting water cell therefore let the hard test's dry stage
+complete fluid work that was never authorized. Fix: `Planner.phaseAllowed`
+gates every auto-verification path (restore, cell match, pool sweep,
+solve shortcut) — disabled phases stay pending until the user enables
+them. Regression test `applyVerifiedRespectsPhaseAuthorization`;
+proven by `LiteBuildHardTest` keeping `[WATER, LEVER]` pending.
+
 Second review finding — **fixed**: `BuildController.stanceCandidates`
 rejected every blueprint-reserved cell as a standing position, including
 cells already built. The player could never stand on the structure, so
