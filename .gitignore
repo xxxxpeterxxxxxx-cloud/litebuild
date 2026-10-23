@@ -11,6 +11,7 @@ toolcheck2.txt
 .project
 bin/
 out/
+!publishing/assets/out/
 
 # test evidence (45M+ logs/screenshots)
 validation/

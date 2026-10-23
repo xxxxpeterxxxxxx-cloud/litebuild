@@ -33,13 +33,14 @@ in `modrinth/` und `curseforge/`.
 - **Environments**: Client = Required, Server = Unsupported
 - **Loaders**: Fabric
 - **License**: GPL-3.0-or-later
-- **Gallery** — Vorschläge aus `validation/`:
-  1. `run75-beta6-gate/screenshots/0027_ui-overview.png` (Bedienmenü)
-  2. `run75-beta6-gate/screenshots/0031_ui-settings-pausen.png` (Settings-Tabs)
-  3. `run74-hud/...` HUD im aktiven Bau
-  4. `gentlebuild-hard-complete.png` (fertiger Mechanismus-Bau)
-  5. Ein In-Game-Screenshot beim Reihenbau (Sprint/Stütze)
-  → Vor Upload kurz auf sensible Infos prüfen (Koordinaten/Servername).
+- **Gallery** — fertige, gebrandete Karten (1600×900, englische
+  Headlines, echte GameTest-Screenshots) in `assets/out/`:
+  `hero.png` (Titel-Karte), `gallery-verify.png`, `gallery-phases.png`,
+  `gallery-scaffold.png`, `gallery-batch.png`, `gallery-sprint.png`,
+  `gallery-menu.png`, `gallery-settings.png`, `gallery-cleanup.png`.
+  Empfohlene Reihenfolge: hero → verify → phases → batch → sprint →
+  scaffold → cleanup → menu → settings.
+  Generator: `assets/make_gallery.py` (Quellen: `assets/gallery/`).
 - **Featured Version**: `0.1.0-beta.6` (Type: `beta`, Changelog:
   `changelog/beta-6.md`).
 
@@ -70,9 +71,11 @@ Anticheat-Garantie, Hinweis „Serverside rules apply" beibehalten.
 
 ## Checkliste vor Upload
 
-- [ ] **Projekt-Icon** (beide Plattformen Pflicht): quadratisch, Modrinth
-  empfiehlt ≥ 512×512 PNG — Idee: stilisiertes Gerüst/Eimer-Block oder
-  „GB“-Monogramm; Datei dann im Repo ablegen
+- [x] **Projekt-Icon** fertig: `assets/out/icon.png` / `icon-512.png`
+  (512×512), `icon-256.png`, `icon-128.png`, `icon-pixel-64.png` —
+  isometrischer Pixel-Art-Voxel-Stack (Stein unten → cyan Blueprint-
+  Geister oben), inspiriert von Litematicas Wireframe-Icon.
+  Generator: `assets/make_icon_iso.py`.
 - [ ] Repository-URL in den Beschreibungen ersetzt (`https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild`)
 - [ ] Lizenz-Datei (`LICENSE`, GPL-3.0) liegt dem JAR bei bzw. ist verlinkt
 - [ ] Galerie-Screenshots ohne sensible Infos
