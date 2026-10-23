@@ -1,85 +1,98 @@
-# Publishing-Metadaten — GentleBuild
+# Publishing metadata — GentleBuild
 
-Referenz für das Ausfüllen der Projektseiten. Texte liegen je Plattform
-in `modrinth/` und `curseforge/`.
+Reference for filling out the project pages. Texts live per platform in
+`modrinth/` and `curseforge/`.
 
-## Gemeinsame Felder
+## Shared fields
 
-| Feld | Wert |
+| Field | Value |
 |---|---|
 | Name | GentleBuild |
 | Slug | `gentlebuild` |
-| Lizenz | GPL-3.0-or-later |
+| License | GPL-3.0-or-later |
 | Loader | Fabric |
-| Side | Client only (kein Server-Install nötig, funktioniert auf Servern per Client-Interaktion) |
-| Minecraft-Version | 26.2 (`~26.2` → alle 26.2.x) |
+| Side | Client only (no server install needed; works on servers via client interaction) |
+| Minecraft version | 26.2 (`~26.2` → all 26.2.x) |
 | Java | 25 |
-| Pflicht-Dependencies | Fabric API (beliebig aktuell), Litematica ≥ 0.28.8, MaLiLib ≥ 0.29.6 |
-| Optionale Dependencies | — |
-| Issues / Source | `https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild` (GPL → Source-Link auf Modrinth fast Pflicht) |
-| Donation | `<TODO oder leer>` |
+| Required dependencies | Fabric API (any current), Litematica ≥ 0.28.8, MaLiLib ≥ 0.29.6 |
+| Optional dependencies | — |
+| Issues / Source | `https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild` (GPL → source link is near-mandatory on Modrinth) |
+| Donation | `<TODO or empty>` |
+
+## Platform notes
+
+- **OS compatibility**: pure Java/LWJGL — runs on Linux (all distros),
+  Windows and macOS wherever Fabric + dependencies run. No
+  platform-specific code.
+- **Forge/NeoForge**: not supported. GentleBuild relies on Litematica's
+  loading pipeline; Litematica and MaLiLib exist only for Fabric. Say
+  this plainly on both pages.
+- **Other MC versions**: each needs matching Litematica/MaLiLib builds;
+  not covered.
 
 ## Modrinth
 
-- **Summary** (≤ 256 Zeichen): `modrinth/summary.txt`
-- **Description**: `modrinth/description-en.md` (Hauptseite Englisch;
-  `description-de.md` kann als zusätzlicher Absatz/Link eingebettet werden —
-  Modrinth hat kein Multi-Language-Feld; ggf. deutsche Fassung unter
-  „Deutsch“-Überschrift in derselben Beschreibung anhängen)
-- **Categories** (max. 3 empfohlen):
-  - `Utility` (primär)
+- **Summary** (≤ 256 chars): `modrinth/summary.txt`
+- **Description**: `modrinth/description-en.md` (main page English;
+  `description-de.md` can be embedded as an extra section/link —
+  Modrinth has no multi-language field; append the German version under
+  a "Deutsch" heading in the same description if wanted)
+- **Categories** (max. 3 recommended):
+  - `Utility` (primary)
   - `Game Mechanics`
-  - `Technology` (alternativ `Management`)
+  - `Technology` (alternative: `Management`)
 - **Environments**: Client = Required, Server = Unsupported
 - **Loaders**: Fabric
 - **License**: GPL-3.0-or-later
-- **Gallery** — fertige, gebrandete Karten (1600×900, englische
-  Headlines, echte GameTest-Screenshots) in `assets/out/`:
-  `hero.png` (Titel-Karte), `gallery-verify.png`, `gallery-phases.png`,
+- **Gallery** — finished branded cards (1600×900, English headlines,
+  real gametest screenshots) in `assets/out/`:
+  `hero.png` (title card), `gallery-verify.png`, `gallery-phases.png`,
   `gallery-scaffold.png`, `gallery-batch.png`, `gallery-sprint.png`,
   `gallery-menu.png`, `gallery-settings.png`, `gallery-cleanup.png`.
-  Empfohlene Reihenfolge: hero → verify → phases → batch → sprint →
+  Recommended order: hero → verify → phases → batch → sprint →
   scaffold → cleanup → menu → settings.
-  Generator: `assets/make_gallery.py` (Quellen: `assets/gallery/`).
-- **Featured Version**: `0.1.0-beta.7` (Type: `beta`, Changelog:
+  Generator: `assets/make_gallery.py` (sources: `assets/gallery/`).
+- **Featured version**: `0.1.0-beta.7` (type: `beta`, changelog:
   `changelog/beta-7.md`).
 
 ## CurseForge
 
 - **Short description**: `curseforge/summary.txt`
-- **Description**: `curseforge/description-en.md` (Markdown erlaubt; HTML
-  wird auch akzeptiert)
+- **Description**: `curseforge/description-en.md` (Markdown allowed;
+  HTML is also accepted)
 - **Categories**:
-  - `Utility` (primär)
+  - `Utility` (primary)
   - `Automation`
-  - `Map and Information` (Schematic-Bezug)
-- **Game Versions**: Minecraft 26.2 (alle 26.2.x auswählen, die CF anbietet)
-- **Mod Loaders**: Fabric
+  - `Map and Information` (schematic relation)
+- **Game versions**: Minecraft 26.2 (select all 26.2.x CF offers)
+- **Mod loaders**: Fabric
 - **License**: GPLv3
-- **Project type**: Mod, Client-only
-- **Required deps** (bei jedem File-Upload als „Required Dependency"
-  markieren): Fabric API, Litematica, MaLiLib — jeweils die CF-Projekte
-  verlinken, damit der CF-Launcher sie mitzieht.
-- **Files**: `gentlebuild-0.1.0-beta.7.jar`, Release Type `Beta`,
-  Display name `GentleBuild 0.1.0-beta.7 (MC 26.2)`.
+- **Project type**: Mod, client-only
+- **Required deps** (mark as "Required Dependency" on every file
+  upload): Fabric API, Litematica, MaLiLib — link the CF projects so the
+  CF launcher pulls them in.
+- **Files**: `gentlebuild-0.1.0-beta.7.jar`, release type `Beta`,
+  display name `GentleBuild 0.1.0-beta.7 (MC 26.2)`.
 
-## Version-Changelog-Pflicht
+## Changelog obligation
 
-Jeder Upload braucht ein Changelog — Template in `changelog/beta-7.md`.
-Regel: nur belegte Aussagen (Teststand in `validation/`), keine
-Anticheat-Garantie, Hinweis „Serverside rules apply" beibehalten.
+Every upload needs a changelog — template in `changelog/beta-7.md`.
+Rule: only proven statements (test state in `validation/`), no
+anticheat guarantee, keep the "serverside rules apply" note.
 
-## Checkliste vor Upload
+## Pre-upload checklist
 
-- [x] **Projekt-Icon** fertig: `assets/out/icon.png` / `icon-512.png`
+- [x] **Project icon** done: `assets/out/icon.png` / `icon-512.png`
   (512×512), `icon-256.png`, `icon-128.png`, `icon-pixel-64.png` —
-  isometrischer Pixel-Art-Voxel-Stack (Stein unten → cyan Blueprint-
-  Geister oben), inspiriert von Litematicas Wireframe-Icon.
-  Generator: `assets/make_icon_iso.py`.
-- [ ] Repository-URL in den Beschreibungen ersetzt (`https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild`)
-- [ ] Lizenz-Datei (`LICENSE`, GPL-3.0) liegt dem JAR bei bzw. ist verlinkt
-- [ ] Galerie-Screenshots ohne sensible Infos
-- [ ] Beta-Label klar (kein „stable" im Titel)
-- [ ] Dependencies auf beiden Plattformen als Pflicht eingetragen
-- [ ] Modrinth: Quellcode-Link gesetzt (GPL + Review-Richtlinie)
-- [ ] CurseForge: „Client Only" + Game-Version-Matrix 26.2.x
+  isometric pixel-art voxel stack (solid stone below → cyan blueprint
+  ghosts above), inspired by Litematica's wireframe icon.
+  Generator: `assets/make_icon_iso.py`, finished in PhotoCraft
+  (cyan outer glow + drop shadow).
+- [x] Repository URL in descriptions replaced
+  (`https://github.com/xxxxpeterxxxxxx-cloud/gentlebuild`)
+- [ ] License file (`LICENSE`, GPL-3.0) shipped with the JAR / linked
+- [ ] Gallery screenshots contain no sensitive info
+- [ ] Beta label clear (no "stable" in the title)
+- [ ] Dependencies marked required on both platforms
+- [ ] Modrinth: source link set (GPL + review policy)
+- [ ] CurseForge: "Client Only" + game version matrix 26.2.x
