@@ -110,7 +110,7 @@ class FluidContainmentTest extends McTestBase {
 		bp.forEach(w::set);
 		FluidContainment.Check c = FluidContainment.verify(w, bp::get, p(0, 1, 0), Fluids.LAVA);
 		assertFalse(c.sealed());
-		assertTrue(c.reason().contains("brennbar"));
+		assertTrue(c.reason().contains("flammable"));
 	}
 
 	@Test

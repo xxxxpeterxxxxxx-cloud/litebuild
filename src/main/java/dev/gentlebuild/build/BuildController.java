@@ -104,8 +104,10 @@ public class BuildController {
 	private BlueprintImporter.SnapshotTask snapshot;
 	private String fingerprint;
 	private Object placementIdentity;
+	private BlockPos placementOrigin;
 	private net.minecraft.resources.Identifier dimension;
 	private boolean startAfterSnapshot;
+	private final BuildProgressStore progress = new BuildProgressStore();
 
 	private BuildTarget current;
 	private PathResult path;
@@ -202,7 +204,7 @@ public class BuildController {
 			return false;
 		}
 		if (isRunning()) {
-			pause("Einstellungen geändert");
+			pause("Settings changed");
 		}
 		config = next;
 		return true;
@@ -214,18 +216,18 @@ public class BuildController {
 
 	public HudInfo hudInfo() {
 		Planner shown = checkpointScope != null ? savedCheckpointPlanner : (repairMode ? null : planner);
-		String phase = cleanupMode ? "Stützenabbau" : checkpointScope != null ? "Zwischenprüfung"
-				: repairMode ? "Reparatur " + repairRound + "/" + config.maxRepairRounds
+		String phase = cleanupMode ? "Support removal" : checkpointScope != null ? "Checkpoint"
+				: repairMode ? "Repair " + repairRound + "/" + config.maxRepairRounds
 				: current != null ? switch (current.phase()) {
 					case STRUCTURE -> "Struktur"; case ATTACHMENTS -> "Anbauteile";
-					case MECHANISMS -> "Mechanik"; case FLUIDS -> "Flüssigkeiten";
-					case ACTIVATION -> "Aktivierung";
+					case MECHANISMS -> "Mechanik"; case FLUIDS -> "Fluids";
+					case ACTIVATION -> "Activation";
 				} : "";
 		String detail = state == RunState.RESTING
-				? "Pause: " + (int) Math.ceil(rhythm.remainingTicks() / 20.0) + " s"
-				: state == RunState.WAITING && transaction != null ? "Warte auf Serverbestätigung"
+				? "Break: " + (int) Math.ceil(rhythm.remainingTicks() / 20.0) + " s"
+				: state == RunState.WAITING && transaction != null ? "Waiting for server acknowledgement"
 				: statusLines.isEmpty() ? "" : statusLines.get(0);
-		return new HudInfo(blueprint == null ? "Kein Bauplan gewählt" : blueprint.name(), state, phase,
+		return new HudInfo(blueprint == null ? "No blueprint selected" : blueprint.name(), state, phase,
 				shown == null ? 0 : shown.verifiedCount(), shown == null ? 0 : shown.totalTargets(),
 				pendingAction != null ? pendingAction.target() : current == null ? null : current.pos(),
 				detail, supports.ownedCount(), checkpointRuns);
@@ -321,11 +323,12 @@ public class BuildController {
 				.getSelectedSchematicPlacement();
 		fingerprint = BlueprintImporter.fingerprint(placement, regions);
 		placementIdentity = placement;
+		placementOrigin = placement.getOrigin();
 		dimension = Minecraft.getInstance().level != null
 				? Minecraft.getInstance().level.dimension().identifier() : null;
 		snapshot = new BlueprintImporter.SnapshotTask(placement, regions);
 		state = RunState.PLANNING;
-		statusLines.add("Snapshot laeuft...");
+		statusLines.add("Snapshot running...");
 	}
 
 	public void start() {
@@ -362,10 +365,22 @@ public class BuildController {
 		planner = new Planner(blueprint);
 		for (BlockPos pos : blueprint.blockEntityData()) {
 			planner.noteManualRequirement(pos,
-					"BlockEntity-Inhalt (Inventar/Text) manuell setzen");
+					"Set block entity data (inventory/text) manually");
 		}
 		statusLines.clear();
-		statusLines.add("Baue...");
+		statusLines.add("Building...");
+		// Persisted progress is an offer, never a fact: revalidate every
+		// stored cell against the LIVE world; non-matching cells stay
+		// unverified and are re-queued by the normal eligibility scan.
+		Minecraft live = Minecraft.getInstance();
+		if (live.level != null) {
+			int restored = progress.applyVerified(planner, blueprint,
+					pos -> live.level.getBlockState(pos));
+			if (restored > 0) {
+				statusLines.add(0, "Progress restored: " + restored
+						+ " Zellen revalidiert");
+			}
+		}
 		state = RunState.WALKING;
 		current = null;
 		path = null;
@@ -382,6 +397,7 @@ public class BuildController {
 
 	public void pause(String reason) {
 		releaseInputs();
+		progress.flush();
 		abandonCheckpointScope();
 		if (transaction != null) {
 			AckTracker.remove(transaction);
@@ -399,13 +415,14 @@ public class BuildController {
 		if (state != RunState.EMPTY && state != RunState.COMPLETE) {
 			state = RunState.PAUSED;
 		}
-		if (statusLines.isEmpty() || !statusLines.get(0).equals("Pausiert: " + reason)) {
-			statusLines.add(0, "Pausiert: " + reason);
+		if (statusLines.isEmpty() || !statusLines.get(0).equals("Paused: " + reason)) {
+			statusLines.add(0, "Paused: " + reason);
 		}
 	}
 
 	public void stop() {
 		releaseInputs();
+		progress.flush();
 		abandonCheckpointScope();
 		AckTracker.cancelAll();
 		transaction = null;
@@ -420,12 +437,13 @@ public class BuildController {
 		suspendedWork = null;
 		clearRepairRun();
 		if (blueprint != null) {
-			statusLines.add(0, "Gestoppt");
+			statusLines.add(0, "Stopped");
 		}
 	}
 
 	public void unload() {
 		releaseInputs();
+		progress.endSession();
 		AckTracker.cancelAll();
 		transaction = null;
 		cleanupTx = null;
@@ -573,26 +591,26 @@ public class BuildController {
 				|| mc.options.keyUp.isDown() || mc.options.keyDown.isDown()
 				|| mc.options.keyLeft.isDown() || mc.options.keyRight.isDown()
 				|| mc.options.keyJump.isDown() || mc.options.keyShift.isDown()) {
-			pause("Manuelle Eingabe");
+			pause("Manual input");
 			return true;
 		}
 		if (!mc.isWindowActive() || mc.isPaused() || mc.gui.screen() != null) {
-			pause("Fenster/GUI");
+			pause("Window/GUI");
 			return true;
 		}
 		if (!player.isAlive()) {
-			pause("Spieler gestorben");
+			pause("Player died");
 			return true;
 		}
 		float health = player.getHealth();
 		if (lastHealth >= 0 && health < lastHealth - 0.01f) {
 			lastHealth = health;
-			pause("Schaden erhalten");
+			pause("Damage taken");
 			return true;
 		}
 		lastHealth = health;
 		if (health <= 6.0f) {
-			pause("Niedrige Gesundheit");
+			pause("Low health");
 			return true;
 		}
 		if (player.isPassenger() || player.isFallFlying() || player.getAbilities().flying) {
@@ -635,13 +653,22 @@ public class BuildController {
 			}
 			for (BlockPos pos : blueprint.blockEntityData()) {
 				planner.noteManualRequirement(pos,
-						"BlockEntity-Inhalt (Inventar/Text) manuell setzen");
+						"Set block entity data (inventory/text) manually");
 			}
 			statusLines.clear();
-			statusLines.add("Bauplan: " + blueprint.name() + " | "
-					+ blueprint.nonAirCount() + " Bloecke, "
+			statusLines.add("Blueprint: " + blueprint.name() + " | "
+					+ blueprint.nonAirCount() + " blocks, "
 					+ blueprint.entities() + " Entities(man.), "
-					+ blueprint.blockEntityData().size() + " BlockEntities(man.)");
+					+ blueprint.blockEntityData().size() + " block entities (manual)");
+			// Stored progress only survives an exact world+dimension+
+			// schematic-content+origin match; anything else is discarded.
+			int storedCells = progress.begin(BuildProgressStore.worldKey(mc),
+					dimension != null ? dimension.toString() : "",
+					placementOrigin, fingerprint, blueprint);
+			if (storedCells > 0) {
+				statusLines.add("Saved progress: " + storedCells
+						+ " cells will be revalidated on start");
+			}
 			state = RunState.READY;
 			if (startAfterSnapshot) {
 				startAfterSnapshot = false;
@@ -702,7 +729,7 @@ public class BuildController {
 							.mismatch().pos().equals(bp)) {
 						breakQueue.poll();
 					}
-					statusLines.add(0, "Reparatur manuell "
+					statusLines.add(0, "Manual repair "
 							+ bp.toShortString() + ": " + revalidateReason);
 				}
 				clearPending();
@@ -792,7 +819,7 @@ public class BuildController {
 		if (pendingAction != null && pendingAction.item() != null) {
 			InventoryHelper.EquipResult equip = InventoryHelper.equip(player, pendingAction.item(), config);
 			if (equip != InventoryHelper.EquipResult.READY) {
-				equipFailed(equip, "Material fehlt: "
+				equipFailed(equip, "Missing material: "
 						+ new ItemStack(pendingAction.item()).getHoverName().getString());
 				return;
 			}
@@ -831,7 +858,7 @@ public class BuildController {
 					pendingStance = null;
 					restoreSuspended();
 					if (++revalidateFailures >= MAX_SCAFFOLD_RESOLVE_FAILURES) {
-						pause("Stuetze nicht erreichbar aus aktueller Position");
+						pause("Support unreachable from current position");
 						revalidateFailures = 0;
 						suspendedWork = null;
 						clearPending();
@@ -847,7 +874,7 @@ public class BuildController {
 					clearPending();
 					if (current != null) {
 						failOrRequeue(current,
-								"Keine Sicht auf Ziel aus aktueller Position");
+								"No line of sight to target from current position");
 					}
 					return;
 				}
@@ -906,7 +933,7 @@ public class BuildController {
 			}
 			if (++revalidateFailures >= MAX_REVALIDATE_FAILURES) {
 				revalidateFailures = 0;
-				statusLines.add(0, "Revalidierung fehlgeschlagen bei "
+				statusLines.add(0, "Revalidation failed at "
 						+ attempted.target().toShortString()
 						+ " [" + revalidateReason + "]");
 				clearPending();
@@ -953,7 +980,7 @@ public class BuildController {
 			if (current != null) {
 				if (!planner.placeAttemptAllowed(current.pos())) {
 					planner.markManual(current.pos(),
-							"Platzierung wiederholt vom Server nicht angenommen");
+							"Placement repeatedly not accepted by server");
 				} else {
 					planner.recordPlaceAttempt(current.pos());
 				}
@@ -1002,6 +1029,16 @@ public class BuildController {
 				}
 			}
 		}
+		// Strict bottom-up layering: only the lowest unfinished layer is
+		// worked, so each level is complete before the next one starts.
+		if (config.layerByLayer && !targetPool.isEmpty()) {
+			int minY = Integer.MAX_VALUE;
+			for (BuildTarget t : targetPool) {
+				minY = Math.min(minY, t.pos().getY());
+			}
+			final int layer = minY;
+			targetPool.removeIf(t -> t.pos().getY() > layer);
+		}
 		if (targetPool.isEmpty()) {
 			if (!repairMode && !checkpoint.isEmpty()) {
 				startCheckpointAudit(); // tail batch, however short, before pausing or finishing
@@ -1022,10 +1059,10 @@ public class BuildController {
 				String disabled = planner.onlyDisabledWorkRemaining(
 						config.fluidsEnabled, config.activationEnabled);
 				if (disabled != null) {
-					pause(disabled + " nicht aktiviert");
+					pause(disabled + " not enabled");
 					return;
 				}
-				if (++stallTicks > 400) {
+				if (++stallTicks > config.stallAuditTicks) {
 					// Dependency stall: let the audit decide what is missing.
 					stallTicks = 0;
 					beginFinalAudit();
@@ -1037,7 +1074,7 @@ public class BuildController {
 			for (BuildTarget t : planner.targets()) {
 				if (!planner.isVerified(t) && !planner.isConflicted(t.pos())
 						&& !world.isLoaded(t.pos())) {
-					pause("Relevante Chunks nicht geladen bei "
+					pause("Relevant chunks not loaded at "
 							+ t.pos().toShortString());
 					return;
 				}
@@ -1131,7 +1168,7 @@ public class BuildController {
 		// Fluid tasks first: a dry waterlogged shell is not a conflict.
 		if (target.phase() == Phase.FLUIDS) {
 			if (!config.fluidsEnabled) {
-				pause("Fluessigkeiten nicht aktiviert");
+				pause("Fluids not enabled");
 				return;
 			}
 			if (StateRules.finalEquivalent(target.state(), actual)) {
@@ -1142,7 +1179,7 @@ public class BuildController {
 			if (!solveFluid(mc, player, target, world)) {
 				if (isRunning()) {
 					resetExclusions(target.pos());
-					failOrRequeue(target, "Fluidplatzierung nicht loesbar");
+					failOrRequeue(target, "Fluid placement unsolvable");
 				}
 			}
 			return;
@@ -1160,30 +1197,30 @@ public class BuildController {
 			BlockState next = StateRules.nextInteractionStep(target.state(), actual);
 			if (next != null) {
 				if (!config.activationEnabled && isLiveControl(target.state())) {
-					pause("Aktivierung nicht aktiviert fuer " + target.pos().toShortString());
+					pause("Activation not enabled for " + target.pos().toShortString());
 					return;
 				}
 				if (!planner.interactAttemptAllowed(target.pos())) {
 					planner.markManual(target.pos(),
-							"Zielzustand nicht erreichbar nach Interaktionen");
+							"Target state unreachable after interactions");
 					current = null;
 					return;
 				}
 				if (!solveInteract(mc, player, target, next)) {
 					resetExclusions(target.pos());
-					failOrRequeue(target, "Keine Interaktionsposition gefunden");
+					failOrRequeue(target, "No interaction position found");
 				}
 				return;
 			}
 			planner.markConflict(target.pos(),
-					"Gleicher Block, nicht korrigierbare Eigenschaft weicht ab");
+					"Same block, uncorrectable property differs");
 			current = null;
 			return;
 		}
 		if (!actual.isAir() && !actual.canBeReplaced()
 				&& !StateRules.canStackSlab(target.state(), actual)) {
 			planner.markConflict(target.pos(),
-					"Falscher Block vorhanden: " + actual.getBlock());
+					"Wrong block present: " + actual.getBlock());
 			current = null;
 			return;
 		}
@@ -1192,15 +1229,15 @@ public class BuildController {
 		Item item = ItemResolver.itemFor(target.state());
 		if (item == null) {
 			planner.noteManualRequirement(target.pos(),
-					"Kein Item fuer " + target.state().getBlock());
+					"No item for " + target.state().getBlock());
 			planner.markManual(target.pos(),
-					"Manuell platzieren: " + target.state().getBlock());
+					"Place manually: " + target.state().getBlock());
 			current = null;
 			return;
 		}
 		InventoryHelper.EquipResult equip = InventoryHelper.equip(player, item, config);
 		if (equip != InventoryHelper.EquipResult.READY) {
-			equipFailed(equip, "Material fehlt: " + new ItemStack(item).getHoverName().getString());
+			equipFailed(equip, "Missing material: " + new ItemStack(item).getHoverName().getString());
 			return;
 		}
 		materialWait = 0;
@@ -1216,7 +1253,7 @@ public class BuildController {
 				mc.level, player, player.blockInteractionRange(), triedFaces);
 		if (solved == null) {
 			resetExclusions(target.pos());
-			failOrRequeue(target, "Keine gueltige Platzierungsloesung");
+			failOrRequeue(target, "No valid placement solution");
 			return;
 		}
 		stanceFallback = stances;
@@ -1298,13 +1335,13 @@ public class BuildController {
 		} else {
 			fluid = target.state().getFluidState().getType();
 			if (fluid != Fluids.WATER && fluid != Fluids.LAVA) {
-				planner.markManual(pos, "Nicht unterstuetztes Fluid");
+				planner.markManual(pos, "Unsupported fluid");
 				return true;
 			}
 		}
 		if (fluid == Fluids.WATER && mc.level.environmentAttributes().getValue(
 				net.minecraft.world.attribute.EnvironmentAttributes.WATER_EVAPORATES, pos)) {
-			planner.markManual(pos, "Wasser verdampft in dieser Dimension");
+			planner.markManual(pos, "Water evaporates in this dimension");
 			return true;
 		}
 		Item bucket = fluid == Fluids.WATER ? Items.WATER_BUCKET : Items.LAVA_BUCKET;
@@ -1313,7 +1350,7 @@ public class BuildController {
 			if (equip == InventoryHelper.EquipResult.WAITING) {
 				return true;
 			}
-			equipFailed(equip, "Material fehlt: " + new ItemStack(bucket).getHoverName().getString());
+			equipFailed(equip, "Missing material: " + new ItemStack(bucket).getHoverName().getString());
 			return true;
 		}
 		materialWait = 0;
@@ -1534,7 +1571,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 				FluidContainment.Check check = FluidContainment.verify(
 						new LevelNavWorld(mc.level), blueprint.blocks()::get, pos, fluid);
 				if (!check.sealed()) {
-					pause("Fluid-Abdichtung: " + check.reason()
+					pause("Fluid containment: " + check.reason()
 							+ (check.leakAt() != null ? " @" + check.leakAt().toShortString() : ""));
 					return false;
 				}
@@ -1738,19 +1775,19 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 					if (landed) {
 						// World already matches — no attempt spent; the
 						// re-pick sees the satisfied cell and verifies it.
-						statusLines.add(0, "Spaete Bestaetigung bei "
+						statusLines.add(0, "Late acknowledgement at "
 								+ a.target().toShortString()
-								+ " — weiter");
+								+ " — continuing");
 						current = null;
 						clearPending();
 						return;
 					}
 					if (acksFlowing) {
-						statusLines.add(0, "Bestaetigung spaet bei "
+						statusLines.add(0, "Acknowledgement late at "
 								+ a.target().toShortString()
-								+ " — erneuter Versuch");
+								+ " — retrying");
 						if (current != null) {
-							softRequeue(current, "Spaete Bestaetigung");
+							softRequeue(current, "Spaete acknowledgement");
 						}
 						current = null;
 						clearPending();
@@ -1783,15 +1820,15 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 								.mismatch().pos().equals(a.target())) {
 							breakQueue.poll();
 						}
-						statusLines.add(0, "Reparatur manuell "
+						statusLines.add(0, "Manual repair "
 								+ a.target().toShortString()
-								+ ": Server-Bestaetigung ausgeblieben");
+								+ ": Server-acknowledgement ausgeblieben");
 					}
 					current = null;
 					clearPending();
 					return;
 				}
-				pause("Server-Bestaetigung ausgeblieben bei "
+				pause("Server acknowledgement missing at "
 						+ a.target().toShortString());
 			}
 			default -> { }
@@ -1831,8 +1868,11 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 					if (dist2(feet, target) > (reach + 0.5) * (reach + 0.5)) {
 						continue;
 					}
-					// Never stand on a cell that is itself a build target.
-					if (reservedCells.contains(feet)) {
+					// Only the cell being placed is off-limits: vanilla
+					// refuses a block that intersects the player anyway.
+					// Unbuilt blueprint cells are valid stances — that is
+					// how a player reaches the inside of their own build.
+					if (feet.equals(target) || feet.above().equals(target)) {
 						continue;
 					}
 					if (!isStanceFree(feet, world)) {
@@ -1952,7 +1992,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 					path = null;
 					return;
 				}
-				failOrRequeue(current, "Kein Weg zur Position");
+				failOrRequeue(current, "No path to position");
 				return;
 			}
 		}
@@ -1985,7 +2025,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 				pendingAction = null;
 				restoreSuspended();
 			} else {
-				failOrRequeue(current, "Position nicht mehr begehbar");
+				failOrRequeue(current, "Position no longer reachable");
 			}
 			return;
 		}
@@ -2026,7 +2066,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 			path = null; // replan from the live world
 			if (++unsafeWaypointRetries > MAX_UNSAFE_WAYPOINT_RETRIES) {
 				unsafeWaypointRetries = 0;
-				pause("Wegpunkt nicht mehr sicher");
+				pause("Waypoint no longer safe");
 			}
 			return;
 		}
@@ -2173,12 +2213,12 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 		Item item = scaffoldItem();
 		if (item == null) {
 			materialWait = 0;
-			pause("Kein Geruestblock im Inventar");
+			pause("No scaffold block in inventory");
 			return;
 		}
 		InventoryHelper.EquipResult equip = InventoryHelper.equip(player, item, config);
 		if (equip != InventoryHelper.EquipResult.READY) {
-			equipFailed(equip, "Kein Geruestblock im Inventar");
+			equipFailed(equip, "No scaffold block in inventory");
 			return;
 		}
 		materialWait = 0;
@@ -2203,7 +2243,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 				return;
 			}
 			scaffoldSolveFailures.remove(cell);
-			pause("Manuelle Stuetze noetig bei " + cell.toShortString());
+			pause("Manual support needed at " + cell.toShortString());
 			return;
 		}
 		stanceFallback = stances;
@@ -2342,6 +2382,10 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 	 */
 	private void markVerified(BuildTarget target) {
 		planner.markVerified(target);
+		// Only persist a cell once every task at it is confirmed.
+		if (planner.isVerified(target.pos())) {
+			progress.noteVerified(target.pos());
+		}
 		if (repairMode || checkpointScope != null) {
 			return;
 		}
@@ -2366,7 +2410,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 		checkpointRuns++;
 		checkpoint.clear();
 		statusLines.clear();
-		statusLines.add("Zwischenpruefung: " + cells.size() + " Bloecke");
+		statusLines.add("Checkpoint: " + cells.size() + " blocks");
 		enterAudit(new FinalVerifier(checkpointScope, FinalVerifier.Mode.CONSTRUCTION));
 	}
 
@@ -2381,7 +2425,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 		motion.reset();
 		state = RunState.WALKING;
 		statusLines.clear();
-		statusLines.add("Baue...");
+		statusLines.add("Building...");
 	}
 
 	/**
@@ -2435,7 +2479,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 								== dev.gentlebuild.model.VerificationMismatch.Kind.UNLOADED)
 						.map(m -> m.pos().toShortString()).findFirst().orElse("?");
 				verifyReset();
-				pause("Verifikation: Chunk nicht geladen bei " + at);
+				pause("Verification: chunk not loaded at " + at);
 			}
 			case MISMATCH -> onAuditMismatch(mc, player);
 			case COMPLETE -> {
@@ -2452,19 +2496,20 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 				}
 				List<String> notes = verifier.runtimeNotes();
 				verifyReset();
+				progress.discard(); // build verified complete — nothing to resume
 				state = RunState.COMPLETE;
 				releaseInputs();
 				repairSummary = repairedPositions.isEmpty()
-						? "Bauplan geprueft"
-						: "Bauplan geprueft, " + repairedPositions.size()
-								+ " Positionen korrigiert";
+						? "Blueprint verified"
+						: "Blueprint verified, " + repairedPositions.size()
+								+ " positions corrected";
 				statusLines.add(0, repairSummary
 						+ (supports.ownedCount() > 0
 								? "; " + supports.ownedCount()
-										+ " temporaere Stuetzen verbleiben"
+										+ " temporary supports remain"
 								: "")
 						+ (blueprint.entities() > 0 || !blueprint.blockEntityData().isEmpty()
-						? "; manuelle Entities/NBT verbleiben" : ""));
+						? "; manual entities/NBT remain" : ""));
 				for (String n : notes) {
 					statusLines.add(0, "Info: " + n);
 				}
@@ -2499,12 +2544,12 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 			}
 			if (approved.size() >= MAX_REPAIR_TARGETS_PER_ROUND) {
 				manual.add(m.pos().toShortString()
-						+ ": Rundelimit ueberschritten");
+						+ ": round limit exceeded");
 				continue;
 			}
 			if (repairAttempts.getOrDefault(m.pos(), 0) >= MAX_ATTEMPTS_PER_POS) {
 				manual.add(m.pos().toShortString()
-						+ ": Reparaturversuche erschoepft");
+						+ ": repair attempts exhausted");
 				continue;
 			}
 			// Material preflight BEFORE any break: a REPLACE/FILL whose
@@ -2516,11 +2561,11 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 				Item item = ItemResolver.itemFor(m.expected());
 				if (item == null) {
 					manual.add(m.pos().toShortString()
-							+ ": Kein Item fuer " + m.expected().getBlock());
+							+ ": No item for " + m.expected().getBlock());
 					continue;
 				}
 				if (InventoryHelper.countItem(player, item) == 0) {
-					manual.add(m.pos().toShortString() + ": Material fehlt: "
+					manual.add(m.pos().toShortString() + ": Missing material: "
 							+ new ItemStack(item).getHoverName().getString());
 					continue;
 				}
@@ -2548,18 +2593,18 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 
 		reportManual(total, manual);
 		if (!config.automaticRepairs) {
-			pause("Verifikation: " + total + " Abweichungen (automatische "
-					+ "Reparatur aus)");
+			pause("Verification: " + total + " deviations (automatic "
+					+ "repair off)");
 			return;
 		}
 		int round = scoped ? checkpointRepairRound : repairRound;
 		if (approved.isEmpty() || (round > 0 && !progressed)) {
-			pause("Verifikation: " + total + " Abweichungen, keine weitere "
-					+ "automatische Reparatur moeglich");
+			pause("Verification: " + total + " deviations, no further "
+					+ "automatische Repair moeglich");
 			return;
 		}
 		if (round >= config.maxRepairRounds) {
-			pause("Reparatur-Limit erreicht (" + total + " Abweichungen)");
+			pause("Repair limit reached (" + total + " deviations)");
 			return;
 		}
 		if (scoped) {
@@ -2568,21 +2613,21 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 			repairRound++;
 		}
 		startRepairRound(approved);
-		statusLines.add(0, "Reparatur " + (round + 1) + "/"
+		statusLines.add(0, "Repair " + (round + 1) + "/"
 				+ config.maxRepairRounds + ": " + approved.size()
-				+ " Positionen automatisch, " + manual.size() + " manuell");
+				+ " positions automatic, " + manual.size() + " manual");
 	}
 
 	private void reportManual(int total, List<String> manual) {
 		for (int i = 0; i < manual.size() && i < 8; i++) {
-			statusLines.add(0, "Verifikation: " + manual.get(i));
+			statusLines.add(0, "Verification: " + manual.get(i));
 		}
 		if (manual.size() > 8 || total > manual.size()) {
-			statusLines.add(0, "Verifikation: " + total
-					+ " Abweichungen gesamt (" + manual.size() + " manuell)");
+			statusLines.add(0, "Verification: " + total
+					+ " deviations total (" + manual.size() + " manual)");
 		}
-		repairSummary = "Abweichungen: " + total
-				+ ", manuell: " + manual.size();
+		repairSummary = "Deviations: " + total
+				+ ", manual: " + manual.size();
 	}
 
 	/**
@@ -2630,7 +2675,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 			if (solveRepairBreak(mc, player, d)) {
 				return;
 			}
-			statusLines.add(0, "Reparatur uebersprungen "
+			statusLines.add(0, "Repair skipped "
 					+ d.mismatch().pos().toShortString() + ": "
 					+ revalidateReason);
 			breakQueue.poll();
@@ -2664,7 +2709,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 				}
 			}
 			if (tool == null) {
-				revalidateReason = "Werkzeug fehlt";
+				revalidateReason = "Tool missing";
 				return false;
 			}
 			InventoryHelper.EquipResult equip = InventoryHelper.equip(player, tool, config);
@@ -2676,7 +2721,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 				return true;
 			}
 			if (equip == InventoryHelper.EquipResult.MISSING) {
-				revalidateReason = "Werkzeug fehlt";
+				revalidateReason = "Tool missing";
 				return false;
 			}
 		}
@@ -2718,7 +2763,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 				return true;
 			}
 		}
-		revalidateReason = "Keine sichere erreichbare Abbauposition";
+		revalidateReason = "No safe reachable break position";
 		return false;
 	}
 
@@ -2756,7 +2801,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 				instanceof BlockHitResult hit)
 				|| hit.getType() != HitResult.Type.BLOCK
 				|| !hit.getBlockPos().equals(pos)) {
-			revalidateReason = "Sicht auf Reparaturziel verloren";
+			revalidateReason = "Lost sight of repair target";
 			return false;
 		}
 		InputBroker.holdAttack(true);
@@ -2769,7 +2814,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 
 	public void startCleanup() {
 		if (supports.ownedCount() == 0) {
-			statusLines.add(0, "Keine temporaeren Stuetzen");
+			statusLines.add(0, "No temporary supports");
 			return;
 		}
 		if (isRunning()) {
@@ -2800,14 +2845,14 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 					supports.removed(cleanupTx.action().target());
 					cleanupQueue.poll();
 				} else if (cleanupTx.status() == Transaction.Status.TIMEOUT) {
-					pause("Cleanup-Timeout bei "
+					pause("Cleanup timeout at "
 							+ cleanupTx.action().target().toShortString());
 					AckTracker.remove(cleanupTx);
 					cleanupTx = null;
 					return;
 				} else {
 					cleanupQueue.poll();
-					statusLines.add(0, "Stuetze: Server-Zustand weicht ab");
+					statusLines.add(0, "Support: server state differs");
 				}
 				cleanupTx = null;
 			}
@@ -2834,7 +2879,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 			// neighboring final component depends on it.
 			if (!supports.owns(pos) || !supports.stillExpected(world, pos)) {
 				cancelCleanupTx(pos);
-				statusLines.add(0, "Stuetze veraendert, bleibt: " + pos.toShortString());
+				statusLines.add(0, "Support changed, keeping: " + pos.toShortString());
 				supports.removed(pos);
 				cleanupQueue.poll();
 				continue;
@@ -2842,7 +2887,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 			if (pos.equals(player.blockPosition().below())) {
 				cancelCleanupTx(pos);
 				cleanupQueue.poll();
-				statusLines.add(0, "Stuetze unter Spieler uebersprungen: "
+				statusLines.add(0, "Support under player skipped: "
 						+ pos.toShortString());
 				continue;
 			}
@@ -2860,13 +2905,13 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 			if (protectedNeighbor) {
 				cancelCleanupTx(pos);
 				cleanupQueue.poll();
-				statusLines.add(0, "Stuetze stuetzt Bauwerk, bleibt: "
+				statusLines.add(0, "Support holds the build, keeping: "
 						+ pos.toShortString());
 				continue;
 			}
 			if (!world.isLoaded(pos)) {
 				cancelCleanupTx(pos);
-				statusLines.add(0, "Stuetze in ungeladenem Chunk: " + pos.toShortString());
+				statusLines.add(0, "Support in unloaded chunk: " + pos.toShortString());
 				cleanupQueue.poll();
 				continue;
 			}
@@ -2875,7 +2920,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 			if (eye.distanceTo(center) > player.blockInteractionRange() - REACH_MARGIN) {
 				cancelCleanupTx(pos);
 				cleanupQueue.poll();
-				statusLines.add(0, "Stuetze ausser Reichweite: " + pos.toShortString());
+				statusLines.add(0, "Support out of reach: " + pos.toShortString());
 				continue;
 			}
 			motion.aimAt(player, center);
@@ -2889,7 +2934,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 					|| !hit.getBlockPos().equals(pos)) {
 				cancelCleanupTx(pos);
 				cleanupQueue.poll();
-				statusLines.add(0, "Keine Sicht auf Stuetze: " + pos.toShortString());
+				statusLines.add(0, "No line of sight to support: " + pos.toShortString());
 				continue;
 			}
 			if (cleanupTx == null) {
@@ -2907,7 +2952,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 		InputBroker.holdAttack(false);
 		releaseInputs();
 		state = RunState.PAUSED;
-		statusLines.add(0, "Cleanup fertig; verbliebene: " + supports.ownedCount());
+		statusLines.add(0, "Cleanup done; remaining: " + supports.ownedCount());
 	}
 
 	private void cancelCleanupTx(BlockPos pos) {
@@ -2957,6 +3002,23 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 		}
 	}
 
+	/**
+	 * Pre-build audit for the G-menu ("Preflight"): aggregates missing
+	 * materials, manual work, risky states and the session toggles the plan
+	 * needs. Null while no blueprint is loaded (e.g. mid-snapshot).
+	 */
+	public PreflightReport preflight() {
+		if (blueprint == null) {
+			return null;
+		}
+		Minecraft mc = Minecraft.getInstance();
+		LocalPlayer player = mc.player;
+		return PreflightReport.analyze(blueprint, planner,
+				item -> player == null ? 0 : InventoryHelper.countItem(player, item),
+				mc.level != null ? new LevelNavWorld(mc.level) : null,
+				config.fluidsEnabled, config.activationEnabled);
+	}
+
 	public List<String> materialsReport() {
 		List<String> lines = new ArrayList<>();
 		if (planner == null || blueprint == null) {
@@ -2997,7 +3059,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 			String name = new ItemStack(item).getHoverName().getString();
 			lines.add(name + ": " + have + "/" + e.getValue()[0]
 					+ (have < e.getValue()[0]
-					? " (fehlen " + (e.getValue()[0] - have) + ")" : ""));
+					? " (missing " + (e.getValue()[0] - have) + ")" : ""));
 		}
 		return lines;
 	}

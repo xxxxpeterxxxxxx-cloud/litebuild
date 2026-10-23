@@ -72,15 +72,15 @@ public final class RepairPolicy {
 									boolean fluidsEnabled,
 									boolean activationEnabled) {
 		if (m.kind() == VerificationMismatch.Kind.UNLOADED) {
-			return Decision.manual(m, "Chunk nicht geladen");
+			return Decision.manual(m, "Chunk not loaded");
 		}
 		BlockPos pos = m.pos();
 		if (!world.isLoaded(pos)) {
-			return Decision.manual(m, "Chunk nicht geladen");
+			return Decision.manual(m, "Chunk not loaded");
 		}
 		BlockState live = world.getBlockState(pos);
 		if (m.actual() == null || !live.equals(m.actual())) {
-			return Decision.manual(m, "Zelle veraendert — Neuabgleich noetig");
+			return Decision.manual(m, "Cell changed — re-verification needed");
 		}
 		BlockState expected = m.expected();
 
@@ -91,8 +91,8 @@ public final class RepairPolicy {
 						return Decision.manual(m, "Quelle/Fluss pruefen");
 					}
 					return fluidsEnabled
-							? Decision.of(m, Kind.FILL, "Quellblock setzen")
-							: Decision.manual(m, "Fluide freigeben");
+							? Decision.of(m, Kind.FILL, "Place source block")
+							: Decision.manual(m, "Release fluids");
 				}
 				if (isDependentHalf(expected)) {
 					BlockPos counterpart = counterpartPos(expected, pos);
@@ -102,30 +102,30 @@ public final class RepairPolicy {
 							|| liveCounter.isAir() || liveCounter.canBeReplaced();
 					return counterMissing
 							? Decision.of(m, Kind.FILL,
-									"Primaerteil fehlt ebenfalls — gemeinsam setzen")
+									"Primary half also missing — place together")
 							: Decision.manual(m,
-									"Abhaengige Haelfte einzeln nicht platzierbar");
+									"Dependent half cannot be placed alone");
 				}
-				return Decision.of(m, Kind.FILL, "Fehlenden Block setzen");
+				return Decision.of(m, Kind.FILL, "Place missing block");
 			}
 			case WRONG_STATE -> {
 				BlockState step = StateRules.nextInteractionStep(expected, live);
 				if (step != null) {
 					if (!activationEnabled && isLiveControl(expected)) {
-						return Decision.manual(m, "Aktivierung freigeben");
+						return Decision.manual(m, "Activation freigeben");
 					}
 					return Decision.of(m, Kind.ADJUST,
 							"Interaktionsschritt (Verzoegerung/Schalter)");
 				}
 				if (StateRules.canStackSlab(expected, live)) {
-					return Decision.of(m, Kind.FILL, "Zweite Stufe setzen");
+					return Decision.of(m, Kind.FILL, "Place second slab");
 				}
 				if (expected.hasProperty(BlockStateProperties.WATERLOGGED)
 						&& expected.getValue(BlockStateProperties.WATERLOGGED)
 						&& StateRules.constructionEquivalent(expected, live)) {
 					return fluidsEnabled
 							? Decision.of(m, Kind.FILL, "Trockene Schale waessern")
-							: Decision.manual(m, "Fluide freigeben");
+							: Decision.manual(m, "Release fluids");
 				}
 				if (StateRules.constructionEquivalent(expected, live)) {
 					// Only neighbor-derived connection shapes differ; other
@@ -146,7 +146,7 @@ public final class RepairPolicy {
 						playerFeet, false);
 			}
 			default -> {
-				return Decision.manual(m, "Unbekannter Befund");
+				return Decision.manual(m, "Unknown finding");
 			}
 		}
 	}
@@ -163,7 +163,7 @@ public final class RepairPolicy {
 			return Decision.manual(m, reason);
 		}
 		return Decision.of(m, replace ? Kind.REPLACE : Kind.REMOVE,
-				replace ? "Eigenen Fehlblock ersetzen" : "Eigenen Block entfernen");
+				replace ? "Replace own wrong block" : "Remove own block");
 	}
 
 	/**
@@ -176,24 +176,24 @@ public final class RepairPolicy {
 										  Map<BlockPos, BlockState> owned,
 										  BlockPos playerFeet) {
 		if (!world.isLoaded(pos)) {
-			return "Chunk nicht geladen";
+			return "Chunk not loaded";
 		}
 		BlockState live = world.getBlockState(pos);
 		if (live.isAir()) {
-			return "Bereits Luft";
+			return "Already air";
 		}
 		if (!live.equals(actual)) {
-			return "Zustand veraendert — Neuabgleich noetig";
+			return "State changed — re-verification needed";
 		}
 		if (blueprint == null || !blueprint.blocks().containsKey(pos)) {
-			return "Ausserhalb des Bauplans";
+			return "Outside the blueprint";
 		}
 		BlockState rec = owned.get(pos);
 		if (rec == null || !rec.equals(live)) {
-			return "Kein eigener Block (unbekannt/veraendert)";
+			return "Not own block (unknown/changed)";
 		}
 		if (live.hasBlockEntity() || blockEntityAt(world, pos)) {
-			return "BlockEntity/Inventar vorhanden";
+			return "Block entity/inventory present";
 		}
 		if (!live.getFluidState().isEmpty()
 				|| (live.hasProperty(BlockStateProperties.WATERLOGGED)
@@ -201,7 +201,7 @@ public final class RepairPolicy {
 			return "Fluid/waterlogged";
 		}
 		if (!isInertBreakable(live)) {
-			return "Kein inerter Block";
+			return "Not an inert block";
 		}
 		if (playerFeet != null
 				&& (pos.equals(playerFeet.below()) || pos.equals(playerFeet)
@@ -211,7 +211,7 @@ public final class RepairPolicy {
 		// Any non-air block directly above would drop/collapse onto the cell.
 		if (!world.isLoaded(pos.above())
 				|| !world.getBlockState(pos.above()).isAir()) {
-			return "Block darueber";
+			return "Block above";
 		}
 		// Chebyshev-1 shell: everything must be loaded and dry, and nothing
 		// may actually depend on this cell. A masking reader answers AIR at
@@ -228,24 +228,24 @@ public final class RepairPolicy {
 					}
 					BlockPos n = pos.offset(dx, dy, dz);
 					if (!world.isLoaded(n)) {
-						return "Nachbar nicht geladen";
+						return "Nachbar not loaded";
 					}
 					BlockState ns = world.getBlockState(n);
 					if (ns.isAir()) {
 						continue;
 					}
 					if (!ns.getFluidState().isEmpty()) {
-						return "Fluid nebenan";
+						return "Fluid adjacent";
 					}
 					if (ns.hasBlockEntity() || blockEntityAt(world, n)) {
-						return "BlockEntity nebenan";
+						return "Block entity adjacent";
 					}
 					if (masked != null) {
 						if (!ns.canSurvive(masked, n)) {
-							return "Abhaengiger Block nebenan";
+							return "Dependent block adjacent";
 						}
 					} else if (!isInertNeighbor(ns)) {
-						return "Mechanismus/Anbauteil nebenan";
+						return "Mechanism/attachment adjacent";
 					}
 				}
 			}

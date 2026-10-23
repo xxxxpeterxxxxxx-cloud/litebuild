@@ -50,20 +50,20 @@ public final class GentleBuildHud {
 		lines.add(new String[]{stateLabel(info.state()), "state"});
 		if (!compact) {
 			if (!info.phase().isEmpty()) {
-				lines.add(new String[]{"Bereich: " + info.phase(), "muted"});
+				lines.add(new String[]{"Area: " + info.phase(), "muted"});
 			}
 			if (info.total() > 0) {
-				lines.add(new String[]{"Bauschritte: " + info.done() + "/" + info.total(), "muted"});
+				lines.add(new String[]{"Steps: " + info.done() + "/" + info.total(), "muted"});
 			}
 			if (info.target() != null) {
-				lines.add(new String[]{"Ziel: " + info.target().toShortString(), "muted"});
+				lines.add(new String[]{"Target: " + info.target().toShortString(), "muted"});
 			}
 		}
 		if (!info.detail().isEmpty()) {
 			lines.add(new String[]{ellipsize(font, info.detail(), MAX_W - 2 * PAD), "warn"});
 		}
 		if (info.state() == RunState.COMPLETE) {
-			lines.add(new String[]{"Prüfung abgeschlossen", "accent"});
+			lines.add(new String[]{"Verification finished", "accent"});
 		}
 		if (lines.size() > 6) {
 			lines = new java.util.ArrayList<>(lines.subList(0, 6));
@@ -117,7 +117,7 @@ public final class GentleBuildHud {
 			y += LINE;
 		}
 		if (info.supports() > 0 && !compact) {
-			graphics.text(font, info.supports() + " Stützen aktiv", PAD, y, MUTED);
+			graphics.text(font, info.supports() + " supports active", PAD, y, MUTED);
 		}
 		pose.popMatrix();
 	}
@@ -143,16 +143,16 @@ public final class GentleBuildHud {
 
 	public static String stateLabel(RunState state) {
 		return switch (state) {
-			case EMPTY -> "Kein Bauplan";
-			case READY -> "Bereit";
-			case PLANNING -> "Bauplan einlesen";
-			case WALKING -> "Unterwegs";
-			case AIMING -> "Ausrichten";
-			case WAITING -> "Warten";
-			case RESTING -> "Baupause";
-			case PAUSED -> "Pausiert";
-			case VERIFYING -> "Prüfen";
-			case COMPLETE -> "Abgeschlossen";
+			case EMPTY -> "No blueprint";
+			case READY -> "Ready";
+			case PLANNING -> "Reading blueprint";
+			case WALKING -> "Walking";
+			case AIMING -> "Aiming";
+			case WAITING -> "Waiting";
+			case RESTING -> "Resting";
+			case PAUSED -> "Paused";
+			case VERIFYING -> "Verifying";
+			case COMPLETE -> "Done";
 		};
 	}
 }

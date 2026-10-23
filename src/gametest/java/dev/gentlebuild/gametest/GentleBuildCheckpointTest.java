@@ -59,7 +59,7 @@ public final class GentleBuildCheckpointTest implements FabricClientGameTest {
 			pauseStatus = c.statusLines().toString();
 		}
 		if (c.checkpointRuns() == 1 && st == RunState.VERIFYING
-				&& c.statusLines().toString().contains("Reparatur 1/")) {
+				&& c.statusLines().toString().contains("Repair 1/")) {
 			REPAIR_SEEN.set(true);
 		}
 		if (st != lastState || c.checkpointRuns() != lastRuns) {
@@ -159,7 +159,7 @@ public final class GentleBuildCheckpointTest implements FabricClientGameTest {
 				+ stateBeforeResume.get() + " -> " + BuildController.get().state()
 				+ " (no-op)");
 		String first = status.get();
-		if (!first.contains("Zwischenpruefung: " + FIRST_CHECKPOINT_CELLS + " Bloecke")) {
+		if (!first.contains("Checkpoint: " + FIRST_CHECKPOINT_CELLS + " blocks")) {
 			throw new AssertionError("first checkpoint not 10 cells: " + first);
 		}
 		if (victimX.get() < 0) {

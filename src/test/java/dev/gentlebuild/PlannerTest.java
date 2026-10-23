@@ -202,6 +202,45 @@ class PlannerTest extends McTestBase {
 	}
 
 	@Test
+	void adjacentWaterloggedCellsDoNotDeadlock() {
+		// Two neighboring waterloggable cells: each cell's FLUIDS task
+		// must not wait on the other's FLUIDS task — the late-phase
+		// neighbor check may only require early-phase work.
+		BlockState dry = Blocks.OAK_SLAB.defaultBlockState();
+		BlockState wet = dry.setValue(BlockStateProperties.WATERLOGGED, true);
+		Map<BlockPos, BlockState> blocks = new HashMap<>();
+		blocks.put(p(0, 0, 0), wet);
+		blocks.put(p(1, 0, 0), wet);
+		Planner planner = new Planner(blueprint(blocks));
+		MapWorld world = new MapWorld();
+		world.set(p(0, 0, 0), dry);
+		world.set(p(1, 0, 0), dry);
+		var eligible = planner.nextEligible(world, true, true);
+		assertTrue(eligible.stream().anyMatch(t -> t.phase() == Phase.FLUIDS),
+				"waterlog tasks beside a waterloggable neighbor must stay eligible");
+	}
+
+	@Test
+	void mechanismBesideUnwaterloggedCellIsNotBlocked() {
+		// A mechanism on/beside a cell whose waterlog task is still open
+		// may only wait on that cell's structure, not on the fluid task.
+		BlockState slabTopDry = Blocks.OAK_SLAB.defaultBlockState()
+				.setValue(BlockStateProperties.SLAB_TYPE,
+						net.minecraft.world.level.block.state.properties.SlabType.TOP);
+		BlockState slabTopWet = slabTopDry.setValue(
+				BlockStateProperties.WATERLOGGED, true);
+		Map<BlockPos, BlockState> blocks = new HashMap<>();
+		blocks.put(p(0, 0, 0), slabTopWet);
+		blocks.put(p(0, 1, 0), Blocks.REPEATER.defaultBlockState());
+		Planner planner = new Planner(blueprint(blocks));
+		MapWorld world = new MapWorld();
+		world.set(p(0, 0, 0), slabTopDry); // structure done, waterlog pending
+		var eligible = planner.nextEligible(world, true, true);
+		assertTrue(eligible.stream().anyMatch(t -> t.phase() == Phase.MECHANISMS),
+				"mechanism must not wait on a neighbor's pending waterlog task");
+	}
+
+	@Test
 	void conflictBlocksFluidGate() {
 		// A conflicted/missing earlier-phase task must block FLUIDS outright.
 		Map<BlockPos, BlockState> blocks = new HashMap<>();
@@ -209,7 +248,7 @@ class PlannerTest extends McTestBase {
 		blocks.put(p(0, 2, 0), Blocks.WATER.defaultBlockState());
 		Planner planner = new Planner(blueprint(blocks));
 		MapWorld world = new MapWorld();
-		planner.markConflict(p(0, 0, 0), "falscher Block");
+		planner.markConflict(p(0, 0, 0), "wrong block");
 		for (int i = 0; i < 4; i++) {
 			var eligible = planner.nextEligible(world, true, true);
 			assertTrue(eligible.stream().noneMatch(t -> t.phase() == Phase.FLUIDS),
@@ -248,7 +287,7 @@ class PlannerTest extends McTestBase {
 		planner.nextEligible(world, true, true);
 		// Now the support is removed server-side and the ack invalidates it.
 		world.set(p(0, 0, 0), Blocks.AIR.defaultBlockState());
-		planner.markConflict(p(0, 0, 0), "entfernt");
+		planner.markConflict(p(0, 0, 0), "removed");
 		var eligible = planner.nextEligible(world, true, true);
 		assertTrue(eligible.stream().noneMatch(t -> t.phase() == Phase.FLUIDS));
 	}

@@ -50,20 +50,20 @@ public final class BlueprintImporter {
 		SchematicPlacement placement = manager == null ? null : manager.getSelectedSchematicPlacement();
 		if (placement == null || !placement.isEnabled()) {
 			errors.add(new BuildIssue(BuildIssue.Severity.BLOCKED, BlockPos.ZERO,
-					"Keine aktive Litematica-Placement ausgewaehlt"));
+					"No active Litematica placement selected"));
 			return null;
 		}
 		LitematicaSchematic schematic = placement.getSchematic();
 		if (schematic == null) {
 			errors.add(new BuildIssue(BuildIssue.Severity.BLOCKED, BlockPos.ZERO,
-					"Placement hat keine geladene Schematic"));
+					"Placement has no loaded schematic"));
 			return null;
 		}
 
 		Map<String, SubRegionPlacement> enabled = placement.getEnabledRelativeSubRegionPlacements();
 		if (enabled.isEmpty()) {
 			errors.add(new BuildIssue(BuildIssue.Severity.BLOCKED, BlockPos.ZERO,
-					"Alle Subregionen der Placement sind deaktiviert"));
+					"All subregions of the placement are disabled"));
 			return null;
 		}
 
@@ -76,7 +76,7 @@ public final class BlueprintImporter {
 			Vec3i signedSize = schematic.getAreaSizeAsVec3i(name);
 			if (container == null || signedSize == null) {
 				errors.add(new BuildIssue(BuildIssue.Severity.BLOCKED, BlockPos.ZERO,
-						"Subregion '" + name + "' hat keine Blockdaten"));
+						"Subregion '" + name + "' has no block data"));
 				return null;
 			}
 			Vec3i containerSize = container.getSize();
@@ -86,7 +86,7 @@ public final class BlueprintImporter {
 			totalCells = Math.addExact(totalCells, cells);
 			if (totalCells > MAX_REGION_CELLS) {
 				errors.add(new BuildIssue(BuildIssue.Severity.BLOCKED, BlockPos.ZERO,
-						"Auswahl zu gross: >" + MAX_REGION_CELLS + " Zellen"));
+						"Selection too large: >" + MAX_REGION_CELLS + " Zellen"));
 				return null;
 			}
 			Map<BlockPos, CompoundData> blockEntities = schematic.getBlockEntityMapForRegion(name);
@@ -177,7 +177,7 @@ public final class BlueprintImporter {
 							// Overlapping sub-region cells with different content: reject
 							// instead of nondeterministically overwriting.
 							issues.add(new BuildIssue(BuildIssue.Severity.CONFLICT, world,
-									"Ueberlappende Subregionen mit unterschiedlichen Bloecken"));
+									"Overlapping subregions with different blocks"));
 							failed = true;
 							done = true;
 							return true;
@@ -188,7 +188,7 @@ public final class BlueprintImporter {
 								nonAir++;
 								if (nonAir > MAX_NON_AIR) {
 									issues.add(new BuildIssue(BuildIssue.Severity.BLOCKED, world,
-											"Mehr als " + MAX_NON_AIR + " Nicht-Luft-Bloecke"));
+											"Mehr als " + MAX_NON_AIR + " non-air blocks"));
 									failed = true;
 									done = true;
 									return true;

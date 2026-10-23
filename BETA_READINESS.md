@@ -1,119 +1,191 @@
-# GentleBuild: Weg zur stabilen 1.0
+# GentleBuild: path to a stable 1.0
 
-Stand: 22. Oktober 2026 (aktualisiert nach beta.6). Priorisierte Liste der
-verbleibenden Freigabearbeiten; erledigte Nachweise sind als solche markiert.
+Status: 22 October 2026 (updated after beta.6). Prioritized list of
+remaining release work; completed evidence is marked as such.
 
-Eine 1.0 sollte die unterstützten Bauaufgaben verlässlich abschließen,
-bei nicht unterstützten Aufgaben verständlich pausieren und den erreichten
-Zustand korrekt melden. Mehr Funktionen allein machen die Mod nicht stabil.
+A 1.0 should reliably finish the supported build tasks, pause
+understandably on unsupported tasks, and report the reached state
+correctly. More features alone do not make the mod stable.
 
-## Ausgangslage (beta.6)
+## Baseline (beta.6)
 
-Alle acht ursprünglichen Spieltestklassen bestanden in einem einzigen Lauf
-(16 min, Software-GL), dazu vier neue Klassen in einem zweiten Lauf (7 min).
-Zusammen zwölf registrierte Klassen plus die Unit-Suite. Belege in
-`validation/run75-beta6-gate/` und `validation/run77-new-tests/`:
+All eight original gametest classes passed in a single run
+(16 min, software GL), plus four new classes in a second run (7 min).
+Together twelve registered classes plus the unit suite. Evidence in
+`validation/run75-beta6-gate/` and `validation/run77-new-tests/`:
 
-- `GentleBuildAckTest`: verzögerte und unterdrückte Server-Bestätigungen
-  über ein Test-Paket-Gate; kein Abschluss ohne Bestätigung, begrenzte
-  Pause statt Endlosschleife, sauberer Abschluss nach Freigabe.
-- `GentleBuildImportTest`: echter `.litematic`-Datei-Roundtrip, Rotation
-  und Spiegelung, Mehrfach- und negative Subregionen, Vanilla-Struktur-
-  `.nbt` über `convertStructureToLitematicaSchematic`, Überlappungs-
-  Konflikt als Issue. Lücke: `.schematic` hat upstream nur einen
-  Stub-Writer; `.schem` (Sponge) ist noch nicht per Datei getestet.
-- `GentleBuildStallTest`: unlösbares Ziel endet begrenzt als MANUAL mit
-  Koordinate, Terminalzustand PAUSED, andere Zellen werden fertig.
-- `GentleBuildScaleTest`: 239-Zellen-Bau mit H-Pause und Resume bis
-  COMPLETE (~4600 Ticks, ~270 s, +141 MB Heap) plus `PlannerScaleTest`
-  (7232 Ziele, Sweep < 2 s) als Unit-Test.
-- `scripts/verify.sh`: dokumentierter Einzelbefehl für Units, alle
-  registrierten Spieltests und das JAR, inklusive eigener Testanzeige
-  und Evidenzarchiv.
+- `GentleBuildAckTest`: delayed and suppressed server acknowledgements
+  via a test packet gate; no completion without acknowledgement, bounded
+  pause instead of an endless loop, clean completion after release.
+- `GentleBuildImportTest`: real `.litematic` file round-trip, rotation
+  and mirroring, multiple and negative subregions, vanilla structure
+  `.nbt` via `convertStructureToLitematicaSchematic`, overlap conflict
+  as an issue. Gap: `.schematic` only has a stub writer upstream;
+  `.schem` (Sponge) was not yet file-tested at that point.
+- `GentleBuildStallTest`: an unsolvable target ends bounded as MANUAL
+  with a coordinate, terminal state PAUSED, other cells finish.
+- `GentleBuildScaleTest`: 239-cell build with H-pause and resume to
+  COMPLETE (~4600 ticks, ~270 s, +141 MB heap) plus `PlannerScaleTest`
+  (7,232 targets, sweep < 2 s) as a unit test.
+- `scripts/verify.sh`: documented single command for units, all
+  registered gametests and the JAR, including its own test display and
+  evidence archive.
 
-Der eigene Paket-Audit besteht weiterhin mit null Verstößen. Das ist kein
-externer Anticheat-Test.
+The internal packet audit still passes with zero violations. That is not
+an external anticheat test.
 
-## Vor der 1.0
+## Before 1.0
 
-| Priorität | Arbeit | Stand | Vorgeschlagener Nachweis |
+| Priority | Work | State | Proposed evidence |
 | --- | --- | --- | --- |
-| P0 | Serverbestätigung und Timeout-Verhalten | **Teilweise belegt** (AckTest) | Ergänzend: widersprüchliche Bestätigungen und eigener Server mit Lag/Rollback. |
-| P0 | Wiederholungen und Stillstände begrenzen | **Belegt** (StallTest) | Unlösbares Ziel → begrenzt MANUAL + PAUSED mit Koordinate. |
-| P0 | Eigenständige Server testen | **Offen** | Bau-/Reparaturtests gegen einen lokalen Server mit Verzögerung, TPS-Einbrüchen, Rollbacks, Verbindungsabbruch und Chunk-Neuladen. Braucht Download-Freigabe. |
-| P0 | Import- und Blockmatrix | **Teilweise belegt** (ImportTest) | Fehlt: `.schem`-Datei und `.schematic`-Format (upstream-Stub), sowie Blockmatrix mit Türen/Stufen/Waterlogging per Datei. |
-| P0 | Reproduzierbare Freigabeprüfung | **Belegt** (`scripts/verify.sh`) | Ein Befehl fährt Units + alle registrierten GameTests + JAR und archiviert Evidenz. |
-| P0 | Große und lange Bauaufträge | **Teilweise belegt** (ScaleTest, ~240 Zellen) | Ergänzend: deutlich größere Pläne (5–20k Zellen) und längere Pause-/Resume-Läufe. |
-| P0 | Unterstützten Umfang und Installation festlegen | **Offen** | Saubere Installation/Update von beta.6 testen; getestete Versionsbereiche dokumentieren; manuelle Restarbeiten vor Start sichtbar machen (Vorprüfung unten). |
+| P0 | Server acknowledgement and timeout behavior | **Proven** (AckTest + RewriteAckTest) | Delayed, suppressed, contradictory (REWRITE: server reports a different state → no completion, bounded PAUSED with coordinate, foreign blocks never mined). Only the run against a real server remains open. |
+| P0 | Bound retries and stalls | **Proven** (StallTest) | Unsolvable target → bounded MANUAL + PAUSED with coordinate. |
+| P0 | Test standalone servers | **Infra done, run open** | `testserver/`: real 26.2 server + `gentlebuild-faults` mod (lag/loss/rollback/kick/chunkreload/chaos) + LagProxy. Missing: the actual client run. |
+| P0 | Import and block matrix | **Proven** (ImportTest + SchemTest) | `.schem` (Sponge v2) via file incl. door pair, slab, stairs, waterlogging, repeater, chest block entity. Remaining limit: `.schematic` (upstream stub). |
+| P0 | Reproducible release check | **Proven** (`scripts/verify.sh`) | One command runs units + all registered gametests + JAR and archives evidence. |
+| P0 | Large and long build jobs | **Proven** (PlannerLargeScale 30,510 targets + BigBuild ~1,206 cells with 3× pause/resume) | The real limit remains multi-hour builds; planning and build behavior are checked upward. |
+| P0 | Pin down supported scope and installation | **Open** | Test clean install/update of beta.7; document tested version ranges. The in-menu preflight already provides the manual-leftover view. |
 
-### Konkreter Prüfpunkt: Bestätigungen — größtenteils belegt
+### Concrete checkpoint: acknowledgements — mostly proven
 
-`GentleBuildAckTest` unterdrückt und verzögert echte Clientbound-Updates
-über ein Test-Mixin-Gate, sodass die Vanilla-Prognose ehrlich
-zurückgesetzt wird. Ergebnis: kein verifizierter Abschluss ohne
-Bestätigung, begrenzte Timeouts mit Requeue oder verständlicher Pause,
-korrekter Abschluss nach Freigabe — auch für den Reparatur-Abbau-Pfad.
-Offen bleiben widersprüchliche Bestätigungen (Server meldet anderen
-Zustand als erwartet) und Verhalten gegen einen eigenen Server.
+`GentleBuildAckTest` suppresses and delays real clientbound updates via a
+test mixin gate so the vanilla prediction is honestly rolled back.
+Result: no verified completion without acknowledgement, bounded timeouts
+with requeue or an understandable pause, correct completion after
+release — including the repair mining path. Still open: a run against a
+dedicated server.
 
-### Konkreter Prüfpunkt: Import — teilweise belegt
+### Concrete checkpoint: import — proven for the covered formats
 
-`GentleBuildImportTest` lädt eine echte `.litematic`-Datei über den
-produktiven `GentleBuildCommands.load`-Dispatch, prüft gedrehte und
-gespiegelte Placements inklusive Blockzuständen, Mehrfach- und negative
-Subregionen sowie den `.nbt`-Strukturpfad über Litematicas Konvertierung.
-Überlappungskonflikte werden als CONFLICT-Issue gemeldet. Noch nicht per
-Datei abgedeckt: `.schem` (Sponge, Lesepfad vorhanden) und `.schematic`
-(Schematica-Writer ist upstream ein Stub).
+`GentleBuildImportTest` loads a real `.litematic` file through the
+production `GentleBuildCommands.load` dispatch, checks rotated and
+mirrored placements including block states, multiple and negative
+subregions and the `.nbt` structure path through Litematica's
+conversion. Overlap conflicts are reported as CONFLICT issues.
+`GentleBuildSchemTest` covers `.schem` (Sponge v2) via file. Not covered
+by file: `.schematic` (the Schematica writer is an upstream stub).
 
-### Konkreter Prüfpunkt: Größe und Bedienung — teilweise belegt
+### Concrete checkpoint: size and controls — proven
 
-`PlannerScaleTest` belegt begrenzte Sweeps über ~7.200 Ziele und
-zeitkonstante Zähler/Sortierung. `GentleBuildScaleTest` baut ~240 Zellen
-mit H-Notstopp und Resume. Die HUD liest pro Bild nur einen Snapshot.
-Fenstergrößen, Tastaturbedienung, ungültige Einstellungen und
-fehlgeschlagene Speicherung deckt `GentleBuildUiTest` ab. Offen: Bauaufträge
-im fünfstelligen Zellbereich und sehr lange Läufe.
+`PlannerScaleTest` proves bounded sweeps over ~7,200 targets and
+time-constant counters/sorting. `GentleBuildScaleTest` builds ~240 cells
+with an H emergency stop and resume. The HUD reads only one snapshot per
+frame. Window sizes, keyboard controls, invalid settings and failed
+saves are covered by `GentleBuildUiTest`.
 
-## Für längere Bauvorhaben besonders sinnvoll
+New coverage: `PlannerLargeScaleTest` (unit, **passed**, 30,510 targets
+with exact phase partition, dependent door top halves, double slabs and
+waterlogged slabs; sweep 3.4 s, heap +8 MB, time-constant sorting) and
+`GentleBuildBigBuildTest` (gametest, ~1,206 cells as a 20×15×4 podium
+plus a mechanism row, three H pauses/resumes through the real hotkey
+path, [GTBIG] metrics like [GTSCALE]; registered in the manifest,
+**passed** in ~26 min).
 
-1. **Fortschritt über Neustarts speichern.** Welt/Server, Dimension,
-   Bauplaninhalt und Placement müssen identifizierbar sein. Eigene Blöcke
-   dürfen nach dem Laden nur mit passendem Live-Zustand wieder als eigene
-   gelten. Anschließend neu prüfen; nicht blind an einer alten Aktion
-   fortfahren. Der bisherige Placement-Fingerprint verwendet auch die
-   Objektidentität der Schematic und ist dafür nicht ausreichend.
-2. **Vorprüfung vor dem Start.** Fehlende Materialien, manuelle NBT-/Entity-
-   Aufgaben, nicht unterstützte Zustände und schwierige Zugänge gesammelt
-   anzeigen. Eine Zusammenfassung im Menü ist hilfreicher als erst eine
-   Pause mitten im Bau.
-3. **Verständliche Wiederaufnahme.** Bei Materialmangel, unerreichbarem Ziel
-   oder verändertem Bauplan konkret anzeigen, was der Spieler ändern muss.
-   „Bauschritte erledigt“, „vollständig geprüft“ und „manuelle Restarbeiten“
-   sollen klar unterscheidbar sein.
-4. **Konfigurationsprofile und Übersetzungen.** Einfache Profile innerhalb
-   derselben Sicherheitsgrenzen, vollständige deutsche/englische Texte
-   und ein optionaler Diagnosebericht ohne Zugangsdaten oder private
-   Serverinformationen erleichtern die Nutzung und Fehlermeldung.
+Review finding from building the large fixture — **fixed**: cells whose
+tasks span phases could block each other. `Planner.isEligible` required
+for targets at phase MECHANISMS or later that every blueprint neighbor
+with phase ≤ ATTACHMENTS is fully live-verified — `cellVerifiedLive`
+required ALL tasks of the neighbor cell including its FLUIDS/ACTIVATION
+tasks. Two adjacent waterlogged cells therefore waited on each other
+mutually (deadlock). Fix: `earlyTasksVerifiedLive` now only requires the
+neighbor cell's tasks up to ATTACHMENTS; regression tests
+`adjacentWaterloggedCellsDoNotDeadlock` and
+`mechanismBesideUnwaterloggedCellIsNotBlocked` in `PlannerTest`.
+Correction to the second finding: `StateRules.phaseOf` classifies slabs
+entirely as STRUCTURE under 26.2 `isSolid()` semantics (half slabs and
+dry shells included) — there is no double-slab mis-sorting; the XL test
+constants were corrected accordingly.
 
-Automatisches Crafting, Kistenversorgung, weitere frei wählbare Baumuster
-und komplexe Update-Reihenfolgen können nach einer klar abgegrenzten 1.0
-folgen. Eine verlässliche 1.0 muss nicht jede denkbare Farm automatisch
-reproduzieren.
+Second review finding — **fixed**: `BuildController.stanceCandidates`
+rejected every blueprint-reserved cell as a standing position, including
+cells already built. The player could never stand on the structure, so
+interior/higher cells of solid builds became unreachable and burned
+their two solver attempts into MANUAL. Fixed: only the currently
+targeted cell is excluded; geometric standability is checked by
+`isStanceFree`. Proven by the BigBuild run (wall at ~262/1206 before,
+full 1,206 cells after).
 
-## Anticheat-Kompatibilität
+## Especially worthwhile for longer builds
 
-Nach Freigabe der erforderlichen Downloads: konkrete Produkte und Versionen
-auf einem isolierten eigenen Server testen und Ergebnisse dokumentieren.
-Der lokale Paket-Audit bleibt eine zusätzliche Kontrolle. Weder dieser Audit
-noch ein erfolgreicher Test bei einem Produkt rechtfertigt eine allgemeine
-Kompatibilitäts- oder Unauffälligkeitsgarantie.
+1. ~~**Persist progress across restarts.**~~ ✓ Implemented:
+   `BuildProgressStore` writes verified cells plus a real content
+   fingerprint (SHA-256 over `x,y,z=block[prop=…]` lines, world ID =
+   server IP or save directory, dimension, origin) atomically to
+   `config/gentlebuild-progress/`. Resume only on an exact match and only
+   after live revalidation of the world (`applyVerified`); deviating
+   records are discarded. Unit tests: `BuildProgressStoreTest`; visible
+   in the gametest as "Progress restored: N cells revalidated".
+2. ~~**Preflight before the start.**~~ ✓ Implemented: `PreflightReport`
+   aggregates missing materials, manual tasks (sign text, container
+   contents, command blocks, spawners, entities, unsolvable states),
+   risks (dynamic pistons, unknown fluids, unloaded chunks) and required
+   toggles (fluids/activation). In the G menu as a "Preflight" action
+   with its own page and a hint line in the status card. Unit tests:
+   `PreflightReportTest` (8 tests).
+3. **Understandable resumption.** On missing material, unreachable
+   targets or a changed blueprint, concretely show what the player must
+   change. "Build steps done", "fully verified" and "manual leftovers"
+   should be clearly distinguishable.
+4. **Configuration profiles and translations.** Simple profiles within
+   the same safety bounds, complete German/English texts and an optional
+   diagnostic report without credentials or private server information
+   ease usage and bug reports.
 
-## Empfohlene Reihenfolge
+Automatic crafting, chest supply, more freely selectable build patterns
+and complex update orders can follow after a clearly scoped 1.0. A
+reliable 1.0 does not have to reproduce every imaginable farm
+automatically.
 
-~~HUD/Einstellungen~~ ✓ → ~~Bestätigungs-/Timeout-Lücke und Stillstandsgrenzen~~ ✓
-(teils) → eigener Server mit Lag/Rollback + `.schem`-Dateimatrix →
-große Langzeittests → Release Candidate mit dokumentiertem
-Unterstützungsumfang → 1.0.
+## Anticheat compatibility
 
-Die Veröffentlichung bleibt eine eigene Entscheidung nach diesen Nachweisen.
+After approval of the required downloads: test concrete products and
+versions on an isolated private server and document the results. The
+local packet audit remains an additional control. Neither this audit nor
+a successful test on one product justifies a general compatibility or
+undetectability guarantee.
+
+## Standalone test server (testserver/)
+
+The roadmap item "test standalone servers" is prepared: `testserver/`
+contains a real local server (official Mojang `server.jar` 26.2, sha1
+`823e2250…fcd6`; Fabric server launcher with loader 0.19.5; Fabric API
+0.161.0+26.2 as a server mod). Offline mode, flat world,
+`view-distance=5`, `pause-when-empty-seconds=0`. Boot test passed: the
+server starts, the world generates, the instrumentation mod
+`gentlebuild-faults` loads and `/fault` answers.
+
+Fault injection in two layers:
+
+- `/fault` commands of the own server mod (`testserver/instrumentation/`,
+  javac-built, no Gradle): send delay and packet loss in both
+  directions, targeted suppression/delay of block acks
+  (`ClientboundBlockUpdatePacket` among others), TPS stall via tick
+  sleep, snapshot/`rollback` for server-side reverted block changes,
+  `chunkreload`, `kick`, combined `chaos` mode.
+- `testserver/tools/LagProxy.java` (single Java file, runnable without a
+  build): real network latency/jitter both ways, retransmit queues as
+  loss simulation, hard disconnect via `kick`.
+
+Vanilla additions: `/tick rate`, `/tick freeze`, `/kick`, teleport far
+away for real chunk unloading. Start, procedure and expectations
+(bounded retries, honest pause, no false completion) are in
+`testserver/README.md`. The actual client run with GentleBuild against
+this server remains open.
+
+## Platform compatibility
+
+The mod is pure Java/LWJGL code with no platform-specific paths; it runs
+on Linux (all distributions), Windows and macOS wherever Fabric Loader
+and the dependencies run. Forge/NeoForge are not supported: GentleBuild
+depends on Litematica's schematic loading pipeline, and Litematica and
+MaLiLib only exist for Fabric. Other Minecraft major versions require
+matching Litematica/MaLiLib builds.
+
+## Recommended order
+
+~~HUD/settings~~ ✓ → ~~acknowledgement/timeout gap and stall bounds~~ ✓
+(mostly) → own server with lag/rollback + `.schem` file matrix →
+large long-running tests → release candidate with documented
+support scope → 1.0.
+
+Publication remains a separate decision after this evidence.

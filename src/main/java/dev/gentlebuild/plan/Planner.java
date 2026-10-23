@@ -282,7 +282,7 @@ public class Planner {
 			if (verified.contains(t) || conflicts.contains(t.pos()) || manual.contains(t.pos())) {
 				continue;
 			}
-			return t.phase() == Phase.FLUIDS ? "Fluessigkeiten" : "Aktivierung";
+			return t.phase() == Phase.FLUIDS ? "Fluids" : "Activation";
 		}
 		return null;
 	}
@@ -468,7 +468,7 @@ public class Planner {
 					continue;
 				}
 				if (StateRules.phaseOf(expected).ordinal() <= Phase.ATTACHMENTS.ordinal()
-						&& !cellVerifiedLive(world, neighbor)) {
+						&& !earlyTasksVerifiedLive(world, neighbor)) {
 					return false;
 				}
 			}
@@ -495,12 +495,19 @@ public class Planner {
 				&& StateRules.slabStageEquivalent(target.state(), actual);
 	}
 
-	private boolean cellVerifiedLive(NavWorld world, BlockPos pos) {
+	private boolean earlyTasksVerifiedLive(NavWorld world, BlockPos pos) {
 		// Live-world dependency only: the verified set is a cache, never the
-		// gate. For multi-task cells (dry shell + waterlog, half + double
-		// slab) an earlier task is satisfied when the live state matches it
-		// OR the cell's full desired state already exists.
+		// gate. Only the cell's early-phase tasks (structure/attachments)
+		// must be verified — later-phase tasks at the same cell (waterlog,
+		// activation) must not block a late-phase neighbor, or adjacent
+		// waterloggable cells would deadlock on each other's FLUIDS task.
+		// For multi-task cells (dry shell + waterlog, half + double slab)
+		// an earlier task is satisfied when the live state matches it OR
+		// the cell's full desired state already exists.
 		for (BuildTarget t : targetsAt(pos)) {
+			if (t.phase().ordinal() > Phase.ATTACHMENTS.ordinal()) {
+				continue;
+			}
 			if (!world.isLoaded(pos)) {
 				return false;
 			}

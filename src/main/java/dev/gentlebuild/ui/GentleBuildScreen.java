@@ -10,11 +10,12 @@ import net.minecraft.network.chat.Component;
 import fi.dy.masa.litematica.gui.GuiSchematicLoad;
 import fi.dy.masa.malilib.gui.GuiBase;
 import dev.gentlebuild.build.BuildController;
+import dev.gentlebuild.build.PreflightReport;
 
 /**
  * Control screen (default key G). Compact status card, two button columns
- * with paging when the window is short, footer with Einstellungen +
- * Schließen always visible. Import happens through Litematica's own file
+ * with paging when the window is short, footer with Settings +
+ * Close always visible. Import happens through Litematica's own file
  * browser (.litematic/.schem/.schematic/.nbt).
  */
 public class GentleBuildScreen extends Screen {
@@ -31,6 +32,7 @@ public class GentleBuildScreen extends Screen {
 	private final List<Action> actions = new ArrayList<>();
 	private int page;
 	private int rowsPerPage;
+	private String preflightHint = "";
 
 	public GentleBuildScreen() {
 		super(Component.literal("GentleBuild"));
@@ -39,47 +41,51 @@ public class GentleBuildScreen extends Screen {
 	private void defineActions() {
 		BuildController c = BuildController.get();
 		actions.clear();
-		actions.add(new Action("Start / Weiter",
+		actions.add(new Action("Start / Resume",
 				b -> { c.start(); onClose(); },
-				"Startet oder setzt den Bau fort. Ohne Bauplan wird zuerst die "
-						+ "Placement uebernommen."));
-		actions.add(new Action("Stopp", b -> c.stop(), "Stoppt den Lauf (fortsetzbar)."));
-		actions.add(new Action("Schematic waehlen",
+				"Starts or resumes the build. Without a blueprint the selected "
+						+ "placement is imported first."));
+		actions.add(new Action("Stop", b -> c.stop(), "Stops the run (resumable)."));
+		actions.add(new Action("Choose schematic",
 				b -> GuiBase.openGui(new GuiSchematicLoad()),
-				"Oeffnet Litematicas Browser (.litematic/.schem/.schematic/.nbt). "
-						+ "Laden, Placement auswaehlen, dann zurueckkehren."));
-		actions.add(new Action("Placement nutzen",
+				"Opens Litematica's browser (.litematic/.schem/.schematic/.nbt). "
+						+ "Load a file, select the placement, then come back."));
+		actions.add(new Action("Use placement",
 				b -> c.importSelected(),
-				"Erstellt den Bauplan aus der ausgewaehlten Litematica-Placement."));
-		actions.add(new Action("Pruefen + Fixen",
+				"Builds the blueprint from the selected Litematica placement."));
+		actions.add(new Action("Preflight",
+				b -> this.minecraft.gui.setScreen(new GentleBuildPreflightScreen(this)),
+				"Report before starting: missing materials, manual tasks, "
+						+ "risks and required toggles."));
+		actions.add(new Action("Verify + fix",
 				b -> { c.verify(); onClose(); },
-				"Volle Endpruefung; sichere eigene Fehler werden automatisch "
-						+ "korrigiert. H pausiert weiterhin."));
-		actions.add(new Action("Stuetzen abbauen",
+				"Full final check; safe own mistakes are corrected "
+						+ "automatically. H still pauses."));
+		actions.add(new Action("Remove supports",
 				b -> { c.startCleanup(); onClose(); },
-				"Entfernt eigene temporaere Gerueste (explizit, Rueckwaerts-Reihenfolge)."));
-		actions.add(new Action("Fluide: " + onOff(c.config().fluidsEnabled),
+				"Removes own temporary scaffolds (explicit, reverse order)."));
+		actions.add(new Action("Fluids: " + onOff(c.config().fluidsEnabled),
 				b -> {
 					c.config().fluidsEnabled = !c.config().fluidsEnabled;
-					b.setMessage(Component.literal("Fluide: " + onOff(c.config().fluidsEnabled)));
+					b.setMessage(Component.literal("Fluids: " + onOff(c.config().fluidsEnabled)));
 				},
-				"Wasser/Lava nur in geprueften, abgedichteten Bereichen (nur diese Sitzung)."));
-		actions.add(new Action("Aktivierung: " + onOff(c.config().activationEnabled),
+				"Water/lava only in verified, sealed areas (this session only)."));
+		actions.add(new Action("Activation: " + onOff(c.config().activationEnabled),
 				b -> {
 					c.config().activationEnabled = !c.config().activationEnabled;
-					b.setMessage(Component.literal("Aktivierung: " + onOff(c.config().activationEnabled)));
+					b.setMessage(Component.literal("Activation: " + onOff(c.config().activationEnabled)));
 				},
-				"Observer, Hebel, Knoepfe u.ae. Update-Verlaeufe dynamischer "
-						+ "Farmen koennen nicht garantiert werden (nur diese Sitzung)."));
-		actions.add(new Action("Materialien",
+				"Observers, levers, buttons etc. Update chains of dynamic "
+						+ "farms cannot be guaranteed (this session only)."));
+		actions.add(new Action("Materials",
 				b -> {
 					onClose();
 					for (String line : c.materialsReport()) {
 						sendLine(line);
 					}
 				},
-				"Fehlende Materialien in den Chat (Registrierungs-ID sortiert)."));
-		actions.add(new Action("Probleme",
+				"Prints missing materials to chat (sorted by registry id)."));
+		actions.add(new Action("Issues",
 				b -> {
 					onClose();
 					for (var issue : c.issues()) {
@@ -87,20 +93,25 @@ public class GentleBuildScreen extends Screen {
 								+ issue.pos().toShortString() + ": " + issue.message());
 					}
 				},
-				"Aktuelle Konflikte/manuelle Aufgaben in den Chat."));
+				"Prints current conflicts/manual tasks to chat."));
 	}
 
 	@Override
 	protected void init() {
 		defineActions();
+		PreflightReport pre = BuildController.get().preflight();
+		preflightHint = pre == null ? "" : pre.headline();
+		// One extra header row while a preflight hint exists; the button grid
+		// simply starts lower — all other layout logic is unchanged.
+		int headerH = HEADER + (preflightHint.isEmpty() ? 0 : 16);
 		int panelW = Math.min(MAX_W, this.width - 2 * MIN_MARGIN);
 		int colW = (panelW - GAP) / 2;
 		int x0 = (this.width - (2 * colW + GAP)) / 2;
-		rowsPerPage = Math.max(1, (this.height - HEADER - FOOTER - 8) / ROW);
+		rowsPerPage = Math.max(1, (this.height - headerH - FOOTER - 8) / ROW);
 		int pages = Math.max(1, (actions.size() + 2 * rowsPerPage - 1) / (2 * rowsPerPage));
 		page = Math.max(0, Math.min(page, pages - 1));
 
-		int y = HEADER;
+		int y = headerH;
 		int idx = page * 2 * rowsPerPage;
 		for (int row = 0; row < rowsPerPage; row++) {
 			for (int col = 0; col < 2; col++) {
@@ -126,13 +137,13 @@ public class GentleBuildScreen extends Screen {
 					.bounds(x0 + 34, this.height - FOOTER - 22, 30, BTN_H).build());
 		}
 		int fy = this.height - FOOTER + 4;
-		addRenderableWidget(Button.builder(Component.literal("Einstellungen"),
+		addRenderableWidget(Button.builder(Component.literal("Settings"),
 				b -> this.minecraft.gui.setScreen(new GentleBuildSettingsScreen(this)))
 				.bounds(x0, fy, colW, BTN_H)
 				.tooltip(Tooltip.create(Component.literal(
-						"Alle Bau-, Blick-, Pausen- und HUD-Einstellungen.")))
+						"All build, look, pause and HUD settings.")))
 				.build());
-		addRenderableWidget(Button.builder(Component.literal("Schließen"), b -> onClose())
+		addRenderableWidget(Button.builder(Component.literal("Close"), b -> onClose())
 				.bounds(x0 + colW + GAP, fy, colW, BTN_H).build());
 	}
 
@@ -144,7 +155,7 @@ public class GentleBuildScreen extends Screen {
 	}
 
 	private static String onOff(boolean v) {
-		return v ? "an" : "aus";
+		return v ? "on" : "off";
 	}
 
 	@Override
@@ -155,14 +166,18 @@ public class GentleBuildScreen extends Screen {
 		var info = c.hudInfo();
 		int cx = this.width / 2 - Math.min(MAX_W, this.width - 2 * MIN_MARGIN) / 2;
 		int cw = Math.min(MAX_W, this.width - 2 * MIN_MARGIN);
-		graphics.fill(cx, 20, cx + cw, 58, 0x66121820);
+		int cardBottom = preflightHint.isEmpty() ? 58 : 74;
+		graphics.fill(cx, 20, cx + cw, cardBottom, 0x66121820);
 		graphics.text(this.font, info.name(), cx + 6, 26, 0xFFFFFFFF);
 		graphics.text(this.font, GentleBuildHud.stateLabel(info.state())
-				+ (info.total() > 0 ? "  ·  " + info.done() + "/" + info.total() + " Bauschritte" : ""),
+				+ (info.total() > 0 ? "  ·  " + info.done() + "/" + info.total() + " steps" : ""),
 				cx + 6, 38, 0xFFCBD5E1);
 		String status = c.statusLines().isEmpty() ? "" : c.statusLines().get(0);
 		if (!status.isEmpty()) {
 			graphics.text(this.font, status, cx + 6, 50, 0xFFFBBF24);
+		}
+		if (!preflightHint.isEmpty()) {
+			graphics.text(this.font, preflightHint, cx + 6, 62, 0xFF93C5FD);
 		}
 	}
 

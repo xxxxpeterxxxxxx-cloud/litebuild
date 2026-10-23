@@ -4,7 +4,9 @@
 	"version": "1.0.0",
 	"name": "GentleBuild Tests",
 	"environment": "*",
-	"depends": { "gentlebuild": "*" },
+	"depends": {
+		"gentlebuild": "*"
+	},
 	"entrypoints": {
 		"fabric-client-gametest": [
 			"dev.gentlebuild.gametest.GentleBuildGameTest",
@@ -18,7 +20,10 @@
 			"dev.gentlebuild.gametest.GentleBuildAckTest",
 			"dev.gentlebuild.gametest.GentleBuildImportTest",
 			"dev.gentlebuild.gametest.GentleBuildStallTest",
-			"dev.gentlebuild.gametest.GentleBuildScaleTest"
+			"dev.gentlebuild.gametest.GentleBuildScaleTest",
+			"dev.gentlebuild.gametest.GentleBuildSchemTest",
+			"dev.gentlebuild.gametest.GentleBuildRewriteAckTest",
+			"dev.gentlebuild.gametest.GentleBuildBigBuildTest"
 		]
 	},
 	"mixins": [

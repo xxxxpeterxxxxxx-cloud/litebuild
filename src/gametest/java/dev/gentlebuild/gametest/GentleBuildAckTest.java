@@ -125,7 +125,7 @@ public final class GentleBuildAckTest implements FabricClientGameTest {
 			}
 		}
 		String lines = BuildController.get().statusLines().toString();
-		if (!lines.contains("Bestaetigung")) {
+		if (!lines.contains("acknowledgement")) {
 			throw new AssertionError("no ack-timeout branch observed: " + lines);
 		}
 		System.out.println("[GT-ACK] delayed-ack behaviour: "

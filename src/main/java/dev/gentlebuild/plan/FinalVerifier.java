@@ -91,7 +91,7 @@ public final class FinalVerifier {
 				// runtime-waived properties — informational only.
 				if (runtimeNotes.size() < MAX_RUNTIME_NOTES) {
 					runtimeNotes.add(pos.toShortString()
-							+ ": Laufzeit-Zustand abweichend (power/age u.ae.)");
+							+ ": runtime state differs (power/age etc.)");
 				}
 			}
 		}
@@ -179,11 +179,11 @@ public final class FinalVerifier {
 			}
 			lines.add(m.pos().toShortString() + " [" + m.kind() + "] erwartet "
 					+ m.expected() + ", gefunden "
-					+ (m.actual() != null ? m.actual() : "nicht geladen"));
+					+ (m.actual() != null ? m.actual() : "not loaded"));
 		}
 		if (totalMismatches > lines.size()) {
-			lines.add("... und " + (totalMismatches - lines.size())
-					+ " weitere");
+			lines.add("... and " + (totalMismatches - lines.size())
+					+ " more");
 		}
 		return lines;
 	}

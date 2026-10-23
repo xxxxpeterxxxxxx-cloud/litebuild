@@ -63,12 +63,12 @@ class BuildConfigTest {
 		c.shortPauseMinActions = 20;
 		c.shortPauseMaxActions = 5;
 		assertTrue(c.validationErrors().stream()
-				.anyMatch(e -> e.contains("Kurzpausen-Aktionen")), c.validationErrors().toString());
+				.anyMatch(e -> e.contains("shortPauseActions")), c.validationErrors().toString());
 		BuildConfig c2 = new BuildConfig();
 		c2.afkDurationMinTicks = 60;
 		c2.afkDurationMaxTicks = 40;
 		assertTrue(c2.validationErrors().stream()
-				.anyMatch(e -> e.contains("AFK-Dauer")), c2.validationErrors().toString());
+				.anyMatch(e -> e.contains("afkDuration")), c2.validationErrors().toString());
 		BuildConfig c3 = new BuildConfig();
 		c3.checkpointSensitiveBlocks = 9;
 		c3.checkpointStructureBlocks = 7;

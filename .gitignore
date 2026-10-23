@@ -16,3 +16,13 @@ out/
 # test evidence (45M+ logs/screenshots)
 validation/
 testserver/
+
+# testserver: keep source, ignore runtime/binaries
+testserver/*
+!testserver/README.md
+!testserver/start.sh
+!testserver/tools/
+!testserver/instrumentation/
+testserver/instrumentation/lib/
+testserver/instrumentation/build/
+testserver/tools/*.class

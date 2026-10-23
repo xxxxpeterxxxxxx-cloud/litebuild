@@ -3,7 +3,7 @@
 	"id": "gentlebuild",
 	"version": "${version}",
 	"name": "GentleBuild",
-	"description": "Baut Litematica-Bauplaene langsam und regelkonform mit normalen Spielerinteraktionen auf.",
+	"description": "Builds Litematica blueprints step by step using ordinary, rules-compliant player interactions.",
 	"authors": ["GentleBuild"],
 	"license": "GPL-3.0-or-later",
 	"environment": "client",

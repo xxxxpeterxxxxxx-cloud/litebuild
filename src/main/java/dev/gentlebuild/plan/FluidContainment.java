@@ -43,7 +43,7 @@ public final class FluidContainment {
 							   java.util.function.Function<BlockPos, BlockState> expected,
 							   BlockPos source, Fluid fluid) {
 		if (!world.isLoaded(source)) {
-			return Check.leak(source, "Quellzelle nicht geladen");
+			return Check.leak(source, "Source cell not loaded");
 		}
 		// Flood fill the connected expected-fluid region of the same type.
 		Set<BlockPos> region = new HashSet<>();
@@ -62,7 +62,7 @@ public final class FluidContainment {
 					region.add(next);
 					queue.add(next);
 					if (region.size() > MAX_REGION) {
-						return Check.leak(next, "Fluidregion zu gross (>4096 Zellen)");
+						return Check.leak(next, "Fluid region too large (>4096 cells)");
 					}
 				}
 			}
@@ -80,7 +80,7 @@ public final class FluidContainment {
 				}
 				BlockPos next = pos.relative(dir);
 				if (!world.isLoaded(next)) {
-					return Check.leak(next, "Ungeladener Chunk am Fluidrand");
+					return Check.leak(next, "Unloaded chunk at fluid edge");
 				}
 				if (region.contains(next)) {
 					continue;
@@ -88,10 +88,10 @@ public final class FluidContainment {
 				BlockState actual = world.getBlockState(next);
 				if (!sealsFace(actual, world, next, dir.getOpposite())) {
 					return Check.leak(next,
-							"Rand blockiert Fluss nicht: " + actual.getBlock());
+							"Edge does not block flow: " + actual.getBlock());
 				}
 				if (fluid instanceof LavaFluid && isFlammable(actual)) {
-					return Check.leak(next, "Lava direkt neben brennbarem Block");
+					return Check.leak(next, "Lava directly next to flammable block");
 				}
 			}
 		}
@@ -107,10 +107,10 @@ public final class FluidContainment {
 								continue;
 							}
 							if (!world.isLoaded(n)) {
-								return Check.leak(n, "Ungeladen am Lava-Rand");
+								return Check.leak(n, "Unloaded at lava edge");
 							}
 							if (isFlammable(world.getBlockState(n))) {
-								return Check.leak(n, "Brennbarer Block nahe Lava");
+								return Check.leak(n, "Flammable block near lava");
 							}
 						}
 					}
@@ -149,20 +149,20 @@ public final class FluidContainment {
 	private static Check validateRegionCell(NavWorld world, BlockState expected,
 											BlockPos pos, Fluid fluid) {
 		if (!world.isLoaded(pos)) {
-			return Check.leak(pos, "Fluidzelle nicht geladen");
+			return Check.leak(pos, "Fluid cell not loaded");
 		}
 		BlockState live = world.getBlockState(pos);
 		if (isWaterloggedSolid(expected)) {
 			return isDryShellMatch(expected, live) ? Check.ok()
-					: Check.leak(pos, "Trockene Huelle fehlt oder stimmt nicht");
+					: Check.leak(pos, "Dry shell missing or mismatched");
 		}
 		if (!live.getFluidState().isEmpty()) {
 			return live.getBlock() instanceof LiquidBlock
 					&& live.getFluidState().getType().isSame(fluid)
-					? Check.ok() : Check.leak(pos, "Fremdes Fluid in Fluidzelle");
+					? Check.ok() : Check.leak(pos, "Foreign fluid in fluid cell");
 		}
 		return live.isAir() || live.canBeReplaced() ? Check.ok()
-				: Check.leak(pos, "Fluidzelle durch Block belegt");
+				: Check.leak(pos, "Fluid cell occupied by a block");
 	}
 
 	private static boolean isFlammable(BlockState state) {

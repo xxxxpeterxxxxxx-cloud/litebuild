@@ -206,7 +206,7 @@ class RepairPolicyTest extends McTestBase {
 				Blocks.AIR.defaultBlockState(), VerificationMismatch.Kind.MISSING),
 				bp(map), w, Map.of(), p(5, 0, 5));
 		assertEquals(Kind.MANUAL, d.kind());
-		assertTrue(d.reason().contains("veraendert"));
+		assertTrue(d.reason().contains("changed"));
 	}
 
 	// ---- PlacementJournal ----

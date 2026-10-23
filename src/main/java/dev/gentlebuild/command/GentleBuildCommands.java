@@ -39,7 +39,7 @@ public final class GentleBuildCommands {
 			b.then(ClientCommands.literal("select")
 							.requires(FabricClientCommandSource::attended)
 							.executes(c -> { BuildController.get().importSelected();
-								fb(c.getSource(), "Snapshot gestartet (oder Fehler, siehe Status)"); return 1; }))
+								fb(c.getSource(), "Snapshot started (or failed, see status)"); return 1; }))
 					.then(ClientCommands.literal("load")
 							.requires(FabricClientCommandSource::attended)
 							.then(ClientCommands.argument("file", StringArgumentType.greedyString())
@@ -51,12 +51,12 @@ public final class GentleBuildCommands {
 								fb(c.getSource(), "Status: " + BuildController.get().state()); return 1; }))
 					.then(ClientCommands.literal("pause")
 							.requires(FabricClientCommandSource::attended)
-							.executes(c -> { BuildController.get().pause("Befehl");
-								fb(c.getSource(), "Pausiert"); return 1; }))
+							.executes(c -> { BuildController.get().pause("Command");
+								fb(c.getSource(), "Paused"); return 1; }))
 					.then(ClientCommands.literal("stop")
 							.requires(FabricClientCommandSource::attended)
 							.executes(c -> { BuildController.get().stop();
-								fb(c.getSource(), "Gestoppt"); return 1; }))
+								fb(c.getSource(), "Stopped"); return 1; }))
 					.then(ClientCommands.literal("status")
 							.executes(c -> status(c.getSource())))
 					.then(ClientCommands.literal("materials")
@@ -67,20 +67,20 @@ public final class GentleBuildCommands {
 							.requires(FabricClientCommandSource::attended)
 							.executes(c -> { var cfg = BuildController.get().config();
 								cfg.fluidsEnabled = !cfg.fluidsEnabled;
-								fb(c.getSource(), "Fluide: " + (cfg.fluidsEnabled ? "an" : "aus")); return 1; }))
+								fb(c.getSource(), "Fluids: " + (cfg.fluidsEnabled ? "an" : "aus")); return 1; }))
 					.then(ClientCommands.literal("activate")
 							.requires(FabricClientCommandSource::attended)
 							.executes(c -> { var cfg = BuildController.get().config();
 								cfg.activationEnabled = !cfg.activationEnabled;
-								fb(c.getSource(), "Aktivierung: " + (cfg.activationEnabled ? "an" : "aus")); return 1; }))
+								fb(c.getSource(), "Activation: " + (cfg.activationEnabled ? "an" : "aus")); return 1; }))
 					.then(ClientCommands.literal("verify")
 							.requires(FabricClientCommandSource::attended)
 							.executes(c -> { BuildController.get().verify();
-								fb(c.getSource(), "Endpruefung gestartet"); return 1; }))
+								fb(c.getSource(), "Final verification started"); return 1; }))
 					.then(ClientCommands.literal("cleanup")
 							.requires(FabricClientCommandSource::attended)
 							.executes(c -> { BuildController.get().startCleanup();
-								fb(c.getSource(), "Cleanup: " + BuildController.get().supportCount() + " Stuetzen"); return 1; }));
+								fb(c.getSource(), "Cleanup: " + BuildController.get().supportCount() + " supports"); return 1; }));
 			dispatcher.register(b);
 		}
 	}
@@ -108,7 +108,7 @@ public final class GentleBuildCommands {
 		BuildController c = BuildController.get();
 		var report = c.materialsReport();
 		if (report.isEmpty()) {
-			src.sendFeedback(Component.literal("Keine ausstehenden Materialien (oder kein Bauplan)"));
+			src.sendFeedback(Component.literal("No outstanding materials (or no blueprint)"));
 			return 1;
 		}
 		for (String line : report) {
@@ -120,7 +120,7 @@ public final class GentleBuildCommands {
 	private static int issues(FabricClientCommandSource src) {
 		var list = BuildController.get().issues();
 		if (list.isEmpty()) {
-			src.sendFeedback(Component.literal("Keine Probleme"));
+			src.sendFeedback(Component.literal("No issues"));
 			return 1;
 		}
 		for (BuildIssue issue : list) {
@@ -134,7 +134,7 @@ public final class GentleBuildCommands {
 		Path dir = DataManager.getDefaultBaseSchematicDirectory();
 		Path file = dir.resolve(fileName);
 		if (!Files.isRegularFile(file)) {
-			src.sendError(Component.literal("Datei nicht gefunden: " + file));
+			src.sendError(Component.literal("File not found: " + file));
 			return 0;
 		}
 		FileType type = FileType.fromFile(file);
@@ -151,7 +151,7 @@ public final class GentleBuildCommands {
 			default -> null;
 		};
 		if (schematic == null) {
-			src.sendError(Component.literal("Konnte '" + fileName + "' nicht laden"));
+			src.sendError(Component.literal("Could not load '" + fileName + "'"));
 			return 0;
 		}
 		SchematicHolder.getInstance().addSchematic(schematic, true);

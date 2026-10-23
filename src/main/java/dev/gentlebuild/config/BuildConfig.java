@@ -35,6 +35,9 @@ public class BuildConfig {
 	public String scaffoldBlock = "minecraft:dirt";
 	public boolean allowTemporarySupports = true;
 	public boolean sprintOnLongWalks = true;
+	/** Build strictly bottom-up: only targets on the lowest unfinished
+	 *  layer are offered, so a level is finished before the next starts. */
+	public boolean layerByLayer = true;
 	public int checkpointStructureBlocks = 10;
 	public int checkpointSensitiveBlocks = 5;
 
@@ -48,6 +51,9 @@ public class BuildConfig {
 	public int afkDurationMinTicks = 40, afkDurationMaxTicks = 100;
 	public boolean automaticRepairs = true;
 	public int maxRepairRounds = 3;
+	/** Ticks without any offerable target before the audit decides what is
+	 * missing. Wall time stretches under server lag — that is intended. */
+	public int stallAuditTicks = 400;
 
 	// HUD overlay.
 	public boolean hudEnabled = true;
@@ -73,7 +79,7 @@ public class BuildConfig {
 					config = loaded;
 				}
 			} catch (IOException | JsonSyntaxException e) {
-				GentleBuild.LOGGER.warn("gentlebuild.json konnte nicht gelesen werden, nutze Standardwerte: {}",
+				GentleBuild.LOGGER.warn("could not read gentlebuild.json, using defaults: {}",
 						e.getMessage());
 			}
 		}
@@ -102,7 +108,7 @@ public class BuildConfig {
 			}
 			return true;
 		} catch (IOException e) {
-			GentleBuild.LOGGER.warn("gentlebuild.json konnte nicht gespeichert werden: {}", e.getMessage());
+			GentleBuild.LOGGER.warn("could not save gentlebuild.json: {}", e.getMessage());
 			return false;
 		} finally {
 			try {
@@ -138,55 +144,56 @@ public class BuildConfig {
 		checkDouble(errors, "maxAngularAccel", maxAngularAccel, 50.0, 12000.0);
 		checkInt(errors, "maxPlanNodes", maxPlanNodes, 256, 65536);
 		if (scaffoldBlock == null || !scaffoldBlock.matches("[a-z0-9_.-]+:[a-z0-9_./-]+")) {
-			errors.add("Stützblock: ungültige Block-ID \"" + scaffoldBlock
-					+ "\" (Format z.B. minecraft:dirt)");
+			errors.add("Support block: invalid block id \"" + scaffoldBlock
+					+ "\" (format e.g. minecraft:dirt)");
 		}
 		checkDouble(errors, "microCorrectionStrength", microCorrectionStrength, 0.0, 1.0);
 		checkInt(errors, "shortPauseMinActions", shortPauseMinActions, 1, 100);
 		checkInt(errors, "shortPauseMaxActions", shortPauseMaxActions, 1, 100);
-		checkMinMax(errors, "Kurzpausen-Aktionen", shortPauseMinActions, shortPauseMaxActions);
+		checkMinMax(errors, "shortPauseActions", shortPauseMinActions, shortPauseMaxActions);
 		checkInt(errors, "shortPauseMinTicks", shortPauseMinTicks, 1, 200);
 		checkInt(errors, "shortPauseMaxTicks", shortPauseMaxTicks, 1, 200);
-		checkMinMax(errors, "Kurzpausen-Ticks", shortPauseMinTicks, shortPauseMaxTicks);
+		checkMinMax(errors, "shortPauseTicks", shortPauseMinTicks, shortPauseMaxTicks);
 		checkInt(errors, "afkIntervalMinTicks", afkIntervalMinTicks, 20, 72000);
 		checkInt(errors, "afkIntervalMaxTicks", afkIntervalMaxTicks, 20, 72000);
-		checkMinMax(errors, "AFK-Intervall", afkIntervalMinTicks, afkIntervalMaxTicks);
+		checkMinMax(errors, "afkInterval", afkIntervalMinTicks, afkIntervalMaxTicks);
 		checkInt(errors, "afkDurationMinTicks", afkDurationMinTicks, 1, 100);
 		checkInt(errors, "afkDurationMaxTicks", afkDurationMaxTicks, 1, 100);
-		checkMinMax(errors, "AFK-Dauer", afkDurationMinTicks, afkDurationMaxTicks);
+		checkMinMax(errors, "afkDuration", afkDurationMinTicks, afkDurationMaxTicks);
 		if (maxRepairRounds < 1 || maxRepairRounds > 5) {
-			errors.add("maxRepairRounds: Wert " + maxRepairRounds + " außerhalb 1..5");
+			errors.add("maxRepairRounds: value " + maxRepairRounds + " outside 1..5");
 		}
+		checkInt(errors, "stallAuditTicks", stallAuditTicks, 60, 2400);
 		checkInt(errors, "checkpointStructureBlocks", checkpointStructureBlocks, 5, 10);
 		checkInt(errors, "checkpointSensitiveBlocks", checkpointSensitiveBlocks, 5, 10);
 		if (checkpointSensitiveBlocks > checkpointStructureBlocks) {
-			errors.add("Checkpoint: sensibles Limit (" + checkpointSensitiveBlocks
-					+ ") darf das Struktur-Limit (" + checkpointStructureBlocks
-					+ ") nicht überschreiten");
+			errors.add("Checkpoint: sensitive limit (" + checkpointSensitiveBlocks
+					+ ") must not exceed the structure limit (" + checkpointStructureBlocks
+					+ ")");
 		}
 		checkDouble(errors, "hudScale", hudScale, 0.75, 1.5);
 		checkInt(errors, "hudOpacity", hudOpacity, 50, 100);
 		if (hudCorner == null) {
-			errors.add("HUD-Ecke: kein Wert gewählt");
+			errors.add("HUD corner: no value chosen");
 		}
 		return errors;
 	}
 
 	private static void checkInt(List<String> errors, String name, int v, int lo, int hi) {
 		if (v < lo || v > hi) {
-			errors.add(name + ": Wert " + v + " außerhalb " + lo + ".." + hi);
+			errors.add(name + ": value " + v + " outside " + lo + ".." + hi);
 		}
 	}
 
 	private static void checkDouble(List<String> errors, String name, double v, double lo, double hi) {
 		if (!Double.isFinite(v) || v < lo || v > hi) {
-			errors.add(name + ": Wert " + v + " außerhalb " + lo + ".." + hi);
+			errors.add(name + ": value " + v + " outside " + lo + ".." + hi);
 		}
 	}
 
 	private static void checkMinMax(List<String> errors, String name, int min, int max) {
 		if (min > max) {
-			errors.add(name + ": Minimum " + min + " größer als Maximum " + max);
+			errors.add(name + ": Minimum " + min + " greater than maximum " + max);
 		}
 	}
 
@@ -226,6 +233,7 @@ public class BuildConfig {
 			afkDurationMaxTicks = afkDurationMinTicks;
 		}
 		maxRepairRounds = Math.max(1, Math.min(5, maxRepairRounds));
+		stallAuditTicks = clampInt(stallAuditTicks, 60, 2400, 400);
 		checkpointStructureBlocks = clampInt(checkpointStructureBlocks, 5, 10, 10);
 		checkpointSensitiveBlocks = clampInt(checkpointSensitiveBlocks, 5, 10, 5);
 		if (checkpointSensitiveBlocks > checkpointStructureBlocks) {

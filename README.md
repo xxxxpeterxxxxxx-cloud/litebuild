@@ -1,140 +1,138 @@
 # GentleBuild
 
-GentleBuild ist ein reiner **Client-Mod** für Minecraft **26.2** (Fabric), der
-Litematica-Baupläne schrittweise mit **ganz normalen Spielerinteraktionen**
-aufbaut – kein Direktsetzen von Blöcken, keine Serverbefehle, kein Teleport,
-kein „Silent Aim“, kein protokollseitiger Cheat.
+GentleBuild is a pure **client-side mod** for Minecraft **26.2** (Fabric) that
+builds Litematica blueprints step by step using **ordinary player
+interactions** — no direct block placement, no server commands, no teleport,
+no "silent aim", no protocol-level cheats.
 
-Lizenz: **GPL-3.0-or-later** (siehe `LICENSE`).
+License: **GPL-3.0-or-later** (see `LICENSE`).
 
-## Was der Mod tut
+## What the mod does
 
-- **Import** über Litematicas eigenen Datei-Browser: `.litematic`, `.schem`
-  (Sponge), `.schematic`, Vanilla-Struktur-`.nbt` und die übrigen
-  Litematica-Formate werden von Litematica selbst konvertiert.
-- **Snapshot** der ausgewählten Placement (inkl. reservierter Luft-Zellen)
-  mit Größenlimits (max. 1 Mio. Regionzellen, 100k Nicht-Luft-Ziele) und
-  stabilem Fingerabdruck; wird die Placement verschoben/verändert, pausiert
-  der Bau.
-- **Abhängigkeits-Phasen**: Struktur → Anbauteile → Mechanismen →
-  Flüssigkeiten → Aktivierung. Bereits korrekte Blöcke werden übersprungen;
-  wassergeloggte Vollblöcke werden zuerst trocken gebaut, das Wasser kommt
-  als separate Aufgabe später.
-- **Normale Bewegung** (A*-Wegsuche über kollisionsgeprüfte Standpunkte),
-  interpolierte, geschwindigkeits-/beschleunigungsbegrenzte Blickbewegung —
-  die Server-Rotation bleibt immer die echte (kein Silent Aim).
-- **Gezielte Kopfbewegung** (ab 0.1.0-beta.5, abschaltbar): Jeder neue
-  Blickpunkt wird als eine einzige Dreh-Bewegung für Gieren und Nicken
-  ausgeführt — sie beschleunigt und bremst innerhalb der konfigurierten
-  Grenzen, landet genau am Ziel und bleibt danach ruhig. Große Wendungen
-  starten nach einer kurzen Reaktionszeit (1–3 Ticks), kleine nicht. Es gibt
-  kein künstliches Untersteuern, keine Korrekturpausen und keine zufälligen
-  Blicke während Pausen. Kleine Zielverschiebungen aktualisieren nur das Ziel,
-  ohne die Bewegung neu zu starten. Beim Gehen bleibt der Blick auf einer
-  festen Richtung, bis sich die Richtung wirklich ändert.
-  Auf Wunsch kurze Baupausen (0,4–1,2 s) und seltene sichere AFK-Pausen
-  (bis 5 s, nur auf stabilem Untergrund am Aufgabenende).
-- **Hauptinventar-Nachfüllung** (ab 0.1.0-beta.5): Fehlt das Material in der
-  Hotbar, wird es aus Slots 9–35 über einen normalen Tausch-Klick geholt —
-  bevorzugt in einen leeren oder den gerade gewählten Hotbar-Platz. Das geht
-  nur ohne fremdes Container-Menü und mit leerem Cursor; sonst pausiert der Bau mit
-  einem Grund, ohne etwas zu verschieben. Rüstung und Schildhand werden nie
-  angefasst. Nach jedem Wechsel wartet GentleBuild kurz, bis der Client das
-  Zielitem zeigt: 200 ms beim Hotbar-Wechsel, 400 ms beim Nachfüllen aus dem
-  Hauptinventar. Das ist eine Prüfung des eigenen Clientzustands, keine
-  Server-Bestätigung; die Platzierung prüft das Item weiterhin vor jedem Klick.
-- **Standortwahl beim Bauen** (ab 0.1.0-beta.5): Gerade Reihen werden bevorzugt
-  von einem Standpunkt aus gebaut, der möglichst viele noch offene, gleichartige
-  Blöcke in Reichweite hat. Diese Abdeckung ist nur eine Heuristik; jeder Block
-  wird vor dem Setzen erneut gegen Welt und Reichweite geprüft. Zielreihenfolge
-  merkt sich einen Pool an Kandidaten und bevorzugt Blickrichtung plus die gerade
-  bearbeitete Stelle statt quer über die Fläche zu springen. Das ist ein Bewegungsstil, keine
-  Garantie für „menschlich-ununterscheidbar".
-- **Tempo ohne Genauigkeitsverlust** (ab 0.1.0-beta.4): alle von der
-  aktuellen Position aus lösbaren Ziele werden gebaut, bevor gelaufen wird
-  (Stations-Batch über denselben Solver, max. 8 Probes pro Zielwahl);
-  die Zielwahl folgt der aktuellen Arbeitsrichtung (Sweep-Momentum) statt
-  hin- und herzuspringen; auf langen geraden Wegstrecken wird echt gesprintet
-  (`sprintOnLongWalks`, Standard an); aufeinanderfolgende Pipeline-Stufen
-  laufen im selben Tick. Jede Platzierung braucht weiterhin Solver-Raycast,
-  Live-Revalidierung und Server-Bestätigung — schneller kommt nur aus
-  weniger Wegen, nicht aus schwächeren Prüfungen.
-- **Platzieren** nur per `useItemOn`/`useItem` mit echter Sichtlinie,
-  Reichweite, Flächen-Raycast und echter `getStateForPlacement`-Vorhersage.
-  Erfolg zählt erst nach **Server-Bestätigung** (Block-Update-Paket) und
-  mehreren stabilen Ticks – lokale Client-Vorhersage gilt nicht.
-- **Temporäre Gerüste** für unerreichbare Wege (max. 8 pro Wegsegment),
-  nur aus vorher leeren Zellen, per normalem Abbau entfernbar
-  (`/gb cleanup`), mit Besitzverfolgung – fremde Blöcke werden nie
-  angerührt. Der Abbau ist konservativ: Stützen werden übersprungen, wenn
-  sie den Spieler tragen, das Bauwerk berühren, außer Reichweite liegen
-  oder seit der Platzierung verändert wurden – verbliebene Stützen werden
-  gemeldet, nicht still gelöscht.
-- **Flüssigkeiten** nur nach verifizierter Trockenstruktur und nur wenn der
-  verbundene Fluidbereich live durch volle stabile Flächen abgedichtet ist;
-  Lava wird neben brennbarem Material verweigert; Wasser wird in
-  Dimensionen mit Verdunstung nicht gesetzt.
-- **Endverifikation** prüft alle Zellen (inkl. Luft) in zwei vollständigen
-  Durchgängen mit konfigurierbarer Beruhigungszeit; `COMPLETE` gibt es nur
-  bei vollständig verifiziertem Zustand. Verbleibende eigene Gerüste werden
-  in der Statuszeile ausgewiesen. Manuelle Restarbeiten (Entities,
-  BlockEntity-Inhalte, nicht reproduzierbare Zustände) werden separat
-  gemeldet – der Mod behauptet niemals eine vollständige Farm.
+- **Import** through Litematica's own file browser: `.litematic`, `.schem`
+  (Sponge), `.schematic`, vanilla structure `.nbt` and the remaining
+  Litematica formats are converted by Litematica itself.
+- **Snapshot** of the selected placement (including reserved air cells)
+  with size limits (max. 1M region cells, 100k non-air targets) and a
+  stable fingerprint; if the placement is moved or changed, the build
+  pauses.
+- **Dependency phases**: structure → attachments → mechanisms →
+  fluids → activation. Blocks that are already correct are skipped;
+  waterlogged full blocks are first built dry, the water arrives as a
+  separate task later. With `layerByLayer` (default on), the target pool
+  prefers the lowest unfinished layer so the build proceeds bottom-up
+  instead of hopping between heights.
+- **Normal movement** (A* pathfinding over collision-checked standing
+  positions), interpolated speed- and acceleration-limited view movement —
+  the server-side rotation is always the real one (no silent aim).
+- **Deliberate head movement** (since 0.1.0-beta.5, can be disabled): each
+  new look point is executed as a single yaw/pitch rotation — it
+  accelerates and decelerates within the configured limits, lands exactly
+  on target and stays calm afterwards. Large turns start after a short
+  reaction time (1–3 ticks), small ones do not. There is no artificial
+  undershoot, no correction pauses and no random glances during pauses.
+  Small target shifts only update the target without restarting the
+  movement. While walking, the view stays on a fixed direction until the
+  direction actually changes. On request, short build pauses (0.4–1.2 s)
+  and rare safe AFK pauses (up to 5 s, only on stable ground at the end of
+  a task).
+- **Main-inventory refill** (since 0.1.0-beta.5): when the material is
+  missing from the hotbar, it is fetched from slots 9–35 through a normal
+  swap click — preferably into an empty or the currently selected hotbar
+  slot. This only works without a foreign container screen and with an
+  empty cursor; otherwise the build pauses with a reason instead of
+  shifting anything. Armor and the offhand are never touched. After every
+  switch GentleBuild waits briefly until the client shows the target item:
+  200 ms for a hotbar switch, 400 ms for a main-inventory refill. That is
+  a check of the local client state, not a server acknowledgement; the
+  placement still verifies the item before every click.
+- **Stance selection while building** (since 0.1.0-beta.5): straight rows
+  are preferably built from a standing spot that covers as many open,
+  same-type blocks in reach as possible. This coverage is only a
+  heuristic; every block is re-checked against world and reach before
+  placement. Target order keeps a pool of candidates and prefers the view
+  direction plus the spot currently being worked on instead of jumping
+  across the area. That is a movement style, not a guarantee of being
+  "indistinguishable from human".
+- **Speed without accuracy loss** (since 0.1.0-beta.4): all targets
+  solvable from the current position are built before walking
+  (station batch through the same solver, max. 8 probes per target pick);
+  the target order follows the current working direction (sweep momentum)
+  instead of hopping back and forth; on long straight path segments the
+  player genuinely sprints (`sprintOnLongWalks`, default on); consecutive
+  pipeline stages run in the same tick. Every placement still requires a
+  solver raycast, live revalidation and server acknowledgement — the
+  speedup comes from fewer walks, not weaker checks.
+- **Placement** only via `useItemOn`/`useItem` with real line of sight,
+  reach, face raycast and real `getStateForPlacement` prediction.
+  Success counts only after **server acknowledgement** (block update
+  packet) and several stable ticks — local client prediction does not
+  count.
+- **Temporary scaffolds** for unreachable paths (max. 8 per path segment),
+  only into previously empty cells, removable via normal mining
+  (`/gb cleanup`), with ownership tracking — foreign blocks are never
+  touched. The cleanup is conservative: supports are skipped when they
+  carry the player, touch the structure, are out of reach or have been
+  changed since placement — remaining supports are reported, not silently
+  deleted.
+- **Fluids** only after the verified dry structure and only when the
+  connected fluid area is live-sealed by full stable faces; lava is
+  refused next to flammable material; water is not placed in dimensions
+  with evaporation.
+- **Final verification** checks all cells (including air) in two complete
+  passes with a configurable settle time; `COMPLETE` is only reached with
+  a fully verified state. Remaining owned scaffolds are shown in the
+  status line. Manual leftovers (entities, block entity contents,
+  non-reproducible states) are reported separately — the mod never claims
+  a finished farm.
 
-## Grenzen (ehrlich)
+## Limits (honest)
 
-- Entities und BlockEntity-Inhalte (Truhen, Hopper-Inventar, Schildtexte)
-  werden nicht gesetzt – sie werden als manuelle Aufgabe gemeldet.
-- Update-empfindliche oder sehr dichte Mechanismen (Redstone-Farmen mit
-  Verschachtelung, Kolben-Schaltungen) können Zwischenschritte erfordern,
-  die manuell nachgearbeitet werden müssen.
-- Laufflächen aus Stufen/Treppen/Teilblöcken werden konservativ behandelt;
-  der Navigator verzichtet im Zweifel auf riskante Kanten.
-- Getestet in einer echten Client-Welt (Fabric-Client-Gametest):
-  Struktur-Linie, Support-Block, Repeater mit Verzögerung 4, Hopper,
-  Glas-Becken mit Wasserquelle, Fluid-Verweigerung bei fehlender Wand ohne
-  Material, Resume nach Reparatur, Endverifikation. Screenshots und Logs
-  unter `validation/run13/`.
-  Zweites Szenario (`validation/run18/`): echte Erdklotz-Stuetze ueber eine
-  Luecke, Doppelstufe aus zwei Einzelsetzungen (Items nur im Hauptinventar,
-  echte Hotbar-Umschaltung) und explizites `/gb cleanup` mit
-  serverbestaetigtem Abbau der Stuetze bei intakter Bauumgebung.
-  Tempo-Szenario (`validation/run32/`): eine 1x5-Reihe wird aus maximal
-  zwei Standpositionen gebaut (Stations-Batch) und auf einem >8-Block-Weg
-  wird echtes Sprinten beobachtet.
+- Entities and block entity contents (chests, hopper inventory, sign
+  text) are not placed — they are reported as manual tasks.
+- Update-sensitive or very dense mechanisms (redstone farms with
+  nesting, piston circuits) can require intermediate steps that have to
+  be reworked manually.
+- Walkways made of slabs/stairs/partial blocks are treated
+  conservatively; the navigator refrains from risky edges when in doubt.
+- Tested in a real client world (Fabric client gametest): structure
+  line, support block, repeater at delay 4, hopper, glass basin with a
+  water source, fluid refusal on a missing wall without material, resume
+  after repair, final verification.
+  Second scenario: a real dirt column across a gap, a double slab from
+  two single placements (items only in the main inventory, real hotbar
+  switching) and an explicit `/gb cleanup` with server-confirmed removal
+  of the support while the surroundings stay intact.
+  Speed scenario: a 1×5 row is built from at most two standing
+  positions (station batch) and real sprinting is observed on a >8-block
+  path.
 
-### Validierung von beta.5
+### Validation of the current source
 
-138 Unit-Tests und alle sieben Client-Spieltestklassen bestehen auf demselben
-Quellstand, verteilt auf mehrere Läufe: HardTest in `validation/run71-repair-stance/`,
-Bau- und Inventartest sowie Unit-Tests in `validation/run72-final-gate/`,
-Reparatur, Lückenüberquerung, Tempo und Zwischenprüfung in
-`validation/run73-software-remaining/`. Der gemeinsame Lauf wurde am
-Laufzeitlimit abgebrochen; ein erfolgreicher Gesamtlauf in einem Prozess
-ist damit noch nicht nachgewiesen. Die vier verbleibenden Tests liefen mit
-Software-Rendering in 4m27s durch.
+170 unit tests and all fifteen client gametest classes pass on the same
+source. The suite covers a `.schem` v2 file-path import (door pair,
+stairs, slab, waterlogging, repeater, chest block entity), contradictory
+server acknowledgements (rewrite mode: the build pauses with coordinates
+instead of repairing foreign blocks, then completes after release), a
+1,206-cell big build with three real pause/resume cycles, progress
+persistence with live revalidation across restarts, and a planner sweep
+over 30,510 targets. Its own packet audit reports zero violations and
+additionally verifies that the real view direction was transmitted before
+the placement click. An external anticheat test is still outstanding.
 
-Die 18er-Reihe wird von vier Standpunkten gebaut, mit bis zu acht bestätigten
-Platzierungen hintereinander vom selben Standpunkt. Die Lückenüberquerung
-bleibt auf Y=64. Der HardTest besteht inklusive Flüssigkeiten, Aktivierung,
-Nachprüfung und vier absichtlich eingebauten Fehlern. Sein eigener
-Paket-Audit meldet null Verstöße und prüft zusätzlich, dass die echte
-Blickrichtung vor dem Platzierklick übertragen wurde. Ein externer
-Anticheat-Test steht weiterhin aus.
+## Controls
 
-## Bedienung
-
-- Taste **G** (konfigurierbar): Bedienfenster
-- Taste **H** (konfigurierbar): Pausieren / Notstopp
-- Befehle `/gentlebuild` (Alias `/gb`):
-  `select`, `load <datei>`, `start`, `pause`, `stop`, `status`,
+- Key **G** (configurable): control screen
+- Key **H** (configurable): pause / emergency stop
+- Commands `/gentlebuild` (alias `/gb`):
+  `select`, `load <file>`, `start`, `pause`, `stop`, `status`,
   `materials`, `issues`, `fluids`, `activate`, `cleanup`
 
-Der Bau pausiert automatisch bei manueller Eingabe (WASD/Sprung/Schleichen/
-Abbau/Benutzen), geöffneten GUIs, Fokusverlust, Schaden, niedriger
-Gesundheit, Tod, Reiten/Fliegen, Weltenwechsel und verändertem Placement.
+The build pauses automatically on manual input (WASD/jump/sneak/
+mine/use), open GUIs, focus loss, damage, low health, death,
+riding/flying, world change and a changed placement.
 
-Konfiguration in `config/gentlebuild.json`, u. a.:
+Configuration in `config/gentlebuild.json`, including:
 
 ```json
 {
@@ -150,134 +148,141 @@ Konfiguration in `config/gentlebuild.json`, u. a.:
   "afkDurationMinTicks": 40,
   "afkDurationMaxTicks": 100,
   "sprintOnLongWalks": true,
-  "minPlaceIntervalTicks": 3
+  "minPlaceIntervalTicks": 3,
+  "layerByLayer": true,
+  "stallAuditTicks": 400
 }
 ```
 
-Kurze Pausen werden nach `…Actions` bestätigten Aktionen für
-`…Ticks` Ticks gelegt; AFK-Pausen nach `afkInterval…Ticks` aktiven
-Bauticks für `afkDuration…Ticks` (höchstens 100 Ticks = 5 s). Die beiden Schalter gibt es auch im
-Bedienfenster (G). `sprintOnLongWalks` lässt den Spieler auf langen,
-freien Wegabschnitten sprinten (normales Sprint-Input, kein
-Geschwindigkeitseingriff). `minPlaceIntervalTicks` (Mindestabstand zweier
-Platzierungen, Clamp ≥ 2) hat seit beta.4 den Standard **3** statt 6 —
-bestehende `gentlebuild.json`-Dateien behalten ihren gespeicherten Wert.
+Short pauses are taken after `…Actions` confirmed actions for `…Ticks`
+ticks; AFK pauses after `afkInterval…Ticks` active build ticks for
+`afkDuration…Ticks` (at most 100 ticks = 5 s). Both switches also exist in
+the control screen (G). `sprintOnLongWalks` lets the player sprint on
+long, clear path segments (normal sprint input, no speed manipulation).
+`minPlaceIntervalTicks` (minimum spacing of two placements, clamp ≥ 2)
+defaults to **3** since beta.4 instead of 6 — existing
+`gentlebuild.json` files keep their stored value. `layerByLayer` orders
+the target pool bottom-up per layer (default on). `stallAuditTicks`
+(clamp 60–2400) controls how long the build may go without verified
+progress before an audit sweep runs — raise it on very laggy servers.
 
-### HUD und Einstellungen (ab 0.1.0-beta.6)
+### HUD and settings (since 0.1.0-beta.6)
 
-Eine native Statusanzeige über dem Chat zeigt Bauplan, Zustand, Bereich,
-Bauschritt-Fortschritt, Ziel, Pause- und Wartegründe sowie aktive Stützen —
-lesend pro Frame, ohne Weltzugriffe. Position (vier Ecken), Skalierung,
-Deckkraft und Kompaktmodus sind einstellbar; die Anzeige blendet sich bei
-offenem Menü und F1-HUD-Modus automatisch aus. Die bisherige
-Actionbar-Zeile entfällt dadurch.
+A native status display above the chat shows blueprint, state, area,
+build-step progress, target, pause and wait reasons plus active supports —
+read-only per frame, without world access. Position (four corners),
+scaling, opacity and compact mode are configurable; the display hides
+automatically when a menu is open and in F1 HUD mode. The previous
+actionbar line is gone.
 
-**Einstellungen (G → Einstellungen):** Ein Entwurf wird erst mit
-„Speichern" übernommen — atomarer Schreibvorgang auf `gentlebuild.json`,
-keine laufenden Änderungen ohne Klick. Ungültige Eingaben bleiben sichtbar
-und werden mit Grund angemahnt; Min/Max-Paare werden gemeinsam geprüft.
-Neue Felder: `hotbarSwitchTicks`, `mainRefillTicks`,
-`checkpointStructureBlocks`, `checkpointSensitiveBlocks`, `hudEnabled`,
-`hudCorner`, `hudCompact`, `hudScale`, `hudOpacity`. Ältere
-`gentlebuild.json`-Dateien ohne diese Felder bekommen die Standardwerte.
+**Settings (G → Settings):** a draft is only applied with "Save" — an
+atomic write to `gentlebuild.json`, no live changes without a click.
+Invalid entries stay visible and are flagged with a reason; min/max pairs
+are validated together. Fields include `hotbarSwitchTicks`,
+`mainRefillTicks`, `checkpointStructureBlocks`,
+`checkpointSensitiveBlocks`, `stallAuditTicks`, `layerByLayer`,
+`hudEnabled`, `hudCorner`, `hudCompact`, `hudScale`, `hudOpacity`. Older
+`gentlebuild.json` files without these fields get the defaults.
 
-### Endprüfung und Reparatur
+### Final check and repair
 
-Nach dem Bau prüft GentleBuild jede Bauplan-Zelle (inkl. geforderter
-AIR-Zellen) in zwei kompletten Durchläufen. Abweichungen werden typisiert
-gemeldet (`/gb status`, „Pruefen + Fixen" bzw. `/gb verify` startet die
-Prüfung auch manuell). Ist `automaticRepairs` aktiv (Standard, Grenze
-`maxRepairRounds`, 1–5), werden nur nachweislich sichere, eigene Fehler
-automatisch korrigiert: fehlende Blöcke nachsetzen, Verzögerungs-/
-Schalterzustände per Rechtsklick anpassen und *eigene* Fehl- oder
-Stützblöcke abbauen — niemals fremde oder veränderte Blöcke, BlockEntities,
-Fluide, Mechanismen oder Zellen mit Last/Redstone in der Nähe. Alles andere
-wird als manueller Punkt mit Grund gemeldet; der Build gilt erst als
-`COMPLETE`, wenn zwei saubere Durchläufe bestanden sind.
+After the build, GentleBuild checks every blueprint cell (including
+required AIR cells) in two complete passes. Deviations are reported with
+types (`/gb status`; "Verify + Fix" or `/gb verify` also starts the check
+manually). If `automaticRepairs` is active (default, limit
+`maxRepairRounds`, 1–5), only provably safe, owned mistakes are corrected
+automatically: re-placing missing blocks, adjusting delay/switch states
+via right click and mining *owned* misplaced or support blocks — never
+foreign or changed blocks, block entities, fluids, mechanisms or cells
+with load/redstone nearby. Everything else is reported as a manual item
+with a reason; the build only counts as `COMPLETE` once two clean passes
+have succeeded.
 
-- **Zwischenprüfungen** (ab 0.1.0-beta.4): Nach 10 fertig gebauten Blöcken
-  (bei Mechanik- oder Flüssigkeitsblöcken schon nach 5) wird der bereits
-  abgeschlossene Bauzustand dieser Zellen geprüft, nicht der volle Zielzustand.
-  Ein Trockenstand (z. B. wasserführender Block vor der Flüssigkeit) gilt dafür
-  als fertig; Verbindungen (Treppen-, Drahtform), die auf Nachbarn warten, zählen
-  erst in der Endprüfung. Abweichungen werden über dieselbe sichere Reparatur
-  korrigiert. Ein Phasenwechsel oder das Bauplanende schließt auch kleine Reste
-  ab. Die vollständige Endprüfung mit zwei Durchläufen bleibt unverändert;
-  Zwischenprüfungen schwenken die Kamera nicht.
+- **Intermediate checks** (since 0.1.0-beta.4): after a configurable
+  number of finished blocks (`checkpointStructureBlocks`, sooner for
+  mechanism or fluid blocks via `checkpointSensitiveBlocks`), the already
+  completed build state of those cells is checked, not the full target
+  state. A dry state (e.g. a block that will carry water before the fluid
+  phase) counts as done; connections (stairs, wire shape) that wait on
+  neighbors only count in the final check. Deviations are corrected via
+  the same safe repair. A phase change or the end of the blueprint also
+  closes small remainders. The full final check with two passes stays
+  unchanged; intermediate checks do not swing the camera.
 
 ## Installation
 
-1. Fabric Loader **0.19.5+** für Minecraft **26.2**
+1. Fabric Loader **0.19.5+** for Minecraft **26.2**
 2. Mods: `fabric-api-0.161.0+26.2`, `litematica-fabric-26.2-0.28.8`,
    `malilib-fabric-26.2-0.29.6`, `gentlebuild-0.1.0-beta.6.jar`
-3. Java **25** wird benötigt.
+3. Java **25** is required.
 
-Kompatibilität: `fabric.mod.json` erlaubt `~26.2` (alle 26.2.x-Patches),
-Fabric API beliebig aktuell, Litematica ≥ 0.28.8, MaLiLib ≥ 0.29.6.
-Andere Minecraft-Hauptversionen brauchen jeweils passende
-Litematica-/MaLiLib-Builds und sind nicht abgedeckt.
+Compatibility: `fabric.mod.json` allows `~26.2` (all 26.2.x patches),
+Fabric API any current version, Litematica ≥ 0.28.8, MaLiLib ≥ 0.29.6.
+The mod is pure Java/LWJGL code and runs on Linux, Windows and macOS
+wherever Fabric and the dependencies run — there is no platform-specific
+code. Other Minecraft major versions each need matching
+Litematica/MaLiLib builds and are not covered. Forge/NeoForge are not
+supported: GentleBuild relies on Litematica's loading pipeline, and
+Litematica/MaLiLib only exist for Fabric.
 
-## Bauen aus Quellen
+## Building from source
 
 ```sh
 ./gradlew build
 ```
 
-Erzeugt `build/libs/gentlebuild-0.1.0-beta.6.jar` und
-`gentlebuild-0.1.0-beta.6-sources.jar`. JDK 25 wird über die
-Java-Toolchain benötigt (z. B. `JAVA_HOME` oder Gradle-Auto-Erkennung;
-keine projektspezifischen Pfade in `gradle.properties`).
+Produces `build/libs/gentlebuild-0.1.0-beta.6.jar` and
+`gentlebuild-0.1.0-beta.6-sources.jar`. JDK 25 is required via the
+Java toolchain (e.g. `JAVA_HOME` or Gradle auto-detection;
+no project-specific paths in `gradle.properties`).
 
-## Verifizierung / Release-Gate
+## Verification / release gate
 
-Ein reproduzierbarer Gesamtlauf ist über ein einziges Kommando dokumentiert:
+A reproducible full run is documented as a single command:
 
 ```sh
 ./scripts/verify.sh
 ```
 
-Das Skript prüft die Umgebung (Java/Javac, Display), setzt
-`LIBGL_ALWAYS_SOFTWARE=1` als Standard für Software-Rendering
-(überschreibbar) und respektiert ein vorhandenes `DISPLAY`. Ohne
-X-Display — oder mit `--isolated` — startet es ein eigenes Xwayland auf
-einem freien privaten Display (Suche ab `:99`; `:0` und `:2` werden nie
-angefasst, nur das selbst gestartete Xwayland wird wieder beendet). Es
-führt nacheinander `./gradlew --offline clean test`,
-`./gradlew --offline runClientGameTest` und `./gradlew --offline build`
-aus. Alle registrierten Client-GameTests werden dabei vom Manifest
-`src/gametest/resources/fabric.mod.json` (Entrypoint
-`fabric-client-gametest`) gesteuert — das Skript zählt keine Tests
-einzeln auf.
+The script checks the environment (Java/Javac, display), sets
+`LIBGL_ALWAYS_SOFTWARE=1` as the default for software rendering
+(overridable) and respects an existing `DISPLAY`. Without an X display —
+or with `--isolated` — it starts its own Xwayland on a free private
+display (searching from `:99`; `:0` and `:2` are never touched, only the
+self-started Xwayland is stopped again). It runs
+`./gradlew --offline clean test`, `./gradlew --offline runClientGameTest`
+and `./gradlew --offline build` in sequence. All registered client
+gametests are driven by the manifest
+`src/gametest/resources/fabric.mod.json` (entrypoint
+`fabric-client-gametest`) — the script does not enumerate tests.
 
-Alle Belege landen in `validation/release-gate-<zeitstempel>/`:
-Konsolen-Logs je Schritt, Unit-Test-XMLs, die GameTest-Screenshots,
-Kopien der verwendeten `fabric.mod.json`, `git status`/
-`git diff --check` und SHA-256-Prüfsummen der erzeugten JARs. Am Ende
-steht eine eindeutige `RELEASE-GATE: PASS`- bzw. `FAIL`-Zeile; bei
-Schrittfehlern, Timeout (Standard 2400 s je Schritt, `--timeout`) oder
-fehlendem `BUILD SUCCESSFUL` im GameTest-Log ist der Exit-Code ungleich
-null.
+All evidence lands in `validation/release-gate-<timestamp>/`:
+console logs per step, unit test XMLs, the gametest screenshots,
+copies of the used `fabric.mod.json`, `git status`/
+`git diff --check` and SHA-256 checksums of the produced JARs. The run
+ends with an unambiguous `RELEASE-GATE: PASS` or `FAIL` line; on step
+failures, timeout (default 2400 s per step, `--timeout`) or a missing
+`BUILD SUCCESSFUL` in the gametest log the exit code is non-zero.
 
-Flags: `--skip-gametest` (nur Unit-Tests + Build), `--isolated`,
-`--display N`, `--timeout SEKUNDEN`.
+Flags: `--skip-gametest` (unit tests + build only), `--isolated`,
+`--display N`, `--timeout SECONDS`.
 
-## Bekannte Grenzen
+## Known limits
 
-- Der Mod nutzt nur legale Client-Interaktionen; er ist langsamer als
-  Creative-/Paste-Werkzeuge und das ist Absicht.
-- Entities und BlockEntity-Inhalte (Truheninhalte, Schildertexte, …) werden
-  als **manuelle Aufgaben** gemeldet, nicht reproduziert.
-- Dynamische Kolben-/Flut-Farmen, deren Verhalten von Update-Historie
-  abhängt, können nicht garantiert werden.
-- Flüssigkeiten werden nur bei vollständig abgedichteten Bereichen
-  platziert; undichte Baupläne bleiben manuelle Arbeit.
-- Ungeladene Chunks, veränderte Umgebung oder fremde Blöcke pausieren den
-  Bau mit konkreten Koordinaten statt heimlich fortzufahren.
-- **Anticheat-Verhalten:** Der Paketstrom wird im Test gegen
-  Anticheat-typische Invarianten geprüft (max. ~45° Drehung/Tick,
-  Reichweite ≤ Vanilla-Limit, Hit-Vektor im geklickten Block,
-  Vanilla-Paketreihenfolge, Sprint nur bei Vorwärtslauf, keine
-  Doppel-Use pro Tick, ≤3 Blöcke Positionsänderung/Tick). Das ist
-  starke lokale Evidenz — ein Test auf einem Live-Server mit echtem
-  Anticheat bleibt ein separater Schritt; auf Servern, die Bau-Bots
-  ohnehin verbieten, ist der Mod nicht zulässig.
+- The mod only uses legal client interactions; it is slower than
+  creative/paste tools and that is intentional.
+- Entities and block entity contents (chest contents, sign text, …) are
+  reported as **manual tasks**, not reproduced.
+- Dynamic piston/flood farms whose behavior depends on update history
+  cannot be guaranteed.
+- Fluids are only placed in fully sealed areas; leaky blueprints remain
+  manual work.
+- Unloaded chunks, a changed environment or foreign blocks pause the
+  build with concrete coordinates instead of silently continuing.
+- **Anticheat behavior:** the packet stream is checked in tests against
+  anticheat-typical invariants (max. ~45° rotation/tick, reach ≤ vanilla
+  limit, hit vector inside the clicked block, vanilla packet order,
+  sprint only while moving forward, no double-use per tick, ≤3 blocks
+  position change/tick). That is strong local evidence — a test on a live
+  server with a real anticheat remains a separate step; on servers that
+  forbid build bots anyway, the mod is not permitted.

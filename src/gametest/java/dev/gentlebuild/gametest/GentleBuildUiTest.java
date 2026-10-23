@@ -71,7 +71,7 @@ public final class GentleBuildUiTest implements FabricClientGameTest {
 								.append(";");
 					}
 				}
-				throw new AssertionError("EditBox nicht gefunden: " + label
+				throw new AssertionError("EditBox not found: " + label
 						+ " | sichtbar: " + visible);
 			}
 			b.setValue(value);
@@ -93,20 +93,20 @@ public final class GentleBuildUiTest implements FabricClientGameTest {
 			context.waitTicks(3);
 		}
 		if (box(context, label) == null) {
-			throw new AssertionError("EditBox auf keiner Seite gefunden: " + label);
+			throw new AssertionError("EditBox not found on any page: " + label);
 		}
 	}
 
 	private static void assertWidgetsInsideAndDisjoint(ClientGameTestContext context, String tag) {
 		List<AbstractWidget> ws = widgets(context);
 		if (ws.isEmpty()) {
-			throw new AssertionError(tag + ": keine Widgets sichtbar");
+			throw new AssertionError(tag + ": no widgets visible");
 		}
 		int w = context.computeOnClient(mc -> mc.getWindow().getGuiScaledWidth());
 		int h = context.computeOnClient(mc -> mc.getWindow().getGuiScaledHeight());
 		for (AbstractWidget a : ws) {
 			if (a.getX() < 0 || a.getY() < 0 || a.getRight() > w || a.getBottom() > h) {
-				throw new AssertionError(tag + ": Widget außerhalb des Bildschirms: "
+				throw new AssertionError(tag + ": Widget outside des Bildschirms: "
 						+ a.getMessage().getString() + " @" + a.getX() + "," + a.getY());
 			}
 		}
@@ -115,7 +115,7 @@ public final class GentleBuildUiTest implements FabricClientGameTest {
 				AbstractWidget a = ws.get(i), b = ws.get(j);
 				if (a.getX() < b.getRight() && b.getX() < a.getRight()
 						&& a.getY() < b.getBottom() && b.getY() < a.getBottom()) {
-					throw new AssertionError(tag + ": Widgets überlappen: "
+					throw new AssertionError(tag + ": widgets overlap: "
 							+ a.getMessage().getString() + " / " + b.getMessage().getString());
 				}
 			}
@@ -127,7 +127,7 @@ public final class GentleBuildUiTest implements FabricClientGameTest {
 			if (mc.gui.screen() != null) {
 				for (var child : mc.gui.screen().children()) {
 					if (child instanceof AbstractWidget w
-							&& "Speichern".equals(w.getMessage().getString())) {
+							&& "Save".equals(w.getMessage().getString())) {
 						return w.active;
 					}
 				}
@@ -138,12 +138,12 @@ public final class GentleBuildUiTest implements FabricClientGameTest {
 
 	private static void assertCannotSave(ClientGameTestContext context, String tag) {
 		if (saveEnabled(context)) {
-			throw new AssertionError(tag + ": Speichern aktiv trotz ungültigem Entwurf");
+			throw new AssertionError(tag + ": Save active despite invalid draft");
 		}
-		context.tryClickScreenButton("Speichern");
+		context.tryClickScreenButton("Save");
 		context.waitTicks(3);
 		if (!(screen(context) instanceof GentleBuildSettingsScreen)) {
-			throw new AssertionError(tag + ": ungültiger Entwurf wurde gespeichert");
+			throw new AssertionError(tag + ": invalid draft was saved");
 		}
 	}
 
@@ -182,54 +182,54 @@ public final class GentleBuildUiTest implements FabricClientGameTest {
 			context.waitTicks(10);
 
 			// ---- settings: draft does not go live before save ----
-			context.clickScreenButton("Einstellungen");
+			context.clickScreenButton("Settings");
 			context.waitForScreen(GentleBuildSettingsScreen.class);
 			int before = liveHotbarDelay(context);
-			setBox(context, "Stützblock (Block-ID)", "minecraft:cobblestone");
+			setBox(context, "Support block (block id)", "minecraft:cobblestone");
 			clickTab(context, "Timings");
-			setBox(context, "Hotbar-Wechsel", "6");
-			setBox(context, "Inventar-Nachfüllen", "10");
+			setBox(context, "Hotbar switch", "6");
+			setBox(context, "Inventory refill", "10");
 			if (liveHotbarDelay(context) != before) {
-				throw new AssertionError("Entwurf wurde vor Speichern aktiv");
+				throw new AssertionError("Draft became active before save");
 			}
 
 			// invalid input must not save
-			clickTab(context, "Bauen");
-			setBox(context, "Stützblock (Block-ID)", "minecraft:tnt");
+			clickTab(context, "Build");
+			setBox(context, "Support block (block id)", "minecraft:tnt");
 			context.waitTicks(3);
 			context.takeScreenshot("ui-invalid-field");
 			assertCannotSave(context, "tnt");
 			if (liveHotbarDelay(context) != before) {
-				throw new AssertionError("Ungültiger Entwurf wurde trotzdem aktiv");
+				throw new AssertionError("Invalid draft became active anyway");
 			}
 
 			// raw invalid text survives tab switch and resize
-			setBox(context, "Stützblock (Block-ID)", "gibtsnicht!");
-			clickTab(context, "Pausen");
-			clickTab(context, "Bauen");
-			if (!"gibtsnicht!".equals(boxValue(context, "Stützblock (Block-ID)"))) {
-				throw new AssertionError("ungültiger Eingabetext ging beim Tabwechsel verloren");
+			setBox(context, "Support block (block id)", "gibtsnicht!");
+			clickTab(context, "Pauses");
+			clickTab(context, "Build");
+			if (!"gibtsnicht!".equals(boxValue(context, "Support block (block id)"))) {
+				throw new AssertionError("invalid input text lost on tab switch");
 			}
 			context.getInput().resizeWindow(320, 240);
 			context.waitTicks(10);
 			assertWidgetsInsideAndDisjoint(context, "settings-320");
 			context.takeScreenshot("ui-settings-320");
-			if (!"gibtsnicht!".equals(boxValue(context, "Stützblock (Block-ID)"))) {
-				throw new AssertionError("ungültiger Eingabetext ging beim Resize verloren");
+			if (!"gibtsnicht!".equals(boxValue(context, "Support block (block id)"))) {
+				throw new AssertionError("invalid input text lost on resize");
 			}
 			context.getInput().resizeWindow(854, 480);
 			context.waitTicks(10);
 
 			// wrong min>max blocks save too
-			clickTab(context, "Pausen");
-			setBox(context, "Kurzpause ab (Aktionen)", "20");
-			setBox(context, "Kurzpause ab (max.)", "5");
+			clickTab(context, "Pauses");
+			setBox(context, "Short pause after (actions)", "20");
+			setBox(context, "Short pause after (max.)", "5");
 			context.waitTicks(3);
 			assertCannotSave(context, "minmax");
 			context.takeScreenshot("ui-settings-pausen");
 
 			// every tab is reachable; paginate Pausen
-			for (String t : new String[]{"Bauen", "Timings", "Blick", "Bewegung", "Pausen", "HUD"}) {
+			for (String t : new String[]{"Build", "Timings", "Look", "Movement", "Pauses", "HUD"}) {
 				clickTab(context, t);
 				assertWidgetsInsideAndDisjoint(context, "tab-" + t);
 			}
@@ -238,61 +238,61 @@ public final class GentleBuildUiTest implements FabricClientGameTest {
 			}
 
 			// 'Alle Standards' resets only the draft
-			clickTab(context, "Bauen");
+			clickTab(context, "Build");
 			context.clickScreenButton("Alle Standards");
-			setBox(context, "Stützblock (Block-ID)", "minecraft:cobblestone");
+			setBox(context, "Support block (block id)", "minecraft:cobblestone");
 			if (liveHotbarDelay(context) != before) {
-				throw new AssertionError("Alle Standards speicherte ohne Klick");
+				throw new AssertionError("All-defaults saved without a click");
 			}
 
 			// valid save: cobblestone scaffold + delays + corner
-			context.clickScreenButton("Speichern");
+			context.clickScreenButton("Save");
 			context.waitForScreen(GentleBuildScreen.class);
 			BuildConfig live = context.computeOnClient(mc -> BuildController.get().config());
 			if (live.hotbarSwitchTicks != 4 || !"minecraft:cobblestone".equals(live.scaffoldBlock)) {
-				throw new AssertionError("gespeicherte Werte nicht aktiv: "
+				throw new AssertionError("saved values not active: "
 						+ live.hotbarSwitchTicks + " / " + live.scaffoldBlock);
 			}
 			BuildConfig reloaded = context.computeOnClient(mc -> BuildConfig.load());
 			if (!"minecraft:cobblestone".equals(reloaded.scaffoldBlock)) {
-				throw new AssertionError("gespeicherter Stützblock überlebte keinen Reload");
+				throw new AssertionError("saved support block did not survive reload");
 			}
 
 			// timings/corner via a second pass
-			context.clickScreenButton("Einstellungen");
+			context.clickScreenButton("Settings");
 			context.waitForScreen(GentleBuildSettingsScreen.class);
 			clickTab(context, "Timings");
-			setBox(context, "Hotbar-Wechsel", "6");
-			setBox(context, "Inventar-Nachfüllen", "10");
+			setBox(context, "Hotbar switch", "6");
+			setBox(context, "Inventory refill", "10");
 			clickTab(context, "HUD");
-			context.clickScreenButton("Oben links");
+			context.clickScreenButton("Top left");
 			context.takeScreenshot("ui-settings-hud");
-			context.clickScreenButton("Speichern");
+			context.clickScreenButton("Save");
 			context.waitForScreen(GentleBuildScreen.class);
 			live = context.computeOnClient(mc -> BuildController.get().config());
 			if (live.hotbarSwitchTicks != 6 || live.mainRefillTicks != 10
 					|| live.hudCorner != BuildConfig.HudCorner.TOP_RIGHT) {
-				throw new AssertionError("Timings/Ecke nicht gespeichert: "
+				throw new AssertionError("Timings/corner not saved: "
 						+ live.hotbarSwitchTicks + "/" + live.mainRefillTicks
 						+ "/" + live.hudCorner);
 			}
 
 			// keyboard: Tab cycles focus, Escape returns to overview
-			context.clickScreenButton("Einstellungen");
+			context.clickScreenButton("Settings");
 			context.waitForScreen(GentleBuildSettingsScreen.class);
 			var focused0 = context.computeOnClient(mc -> mc.gui.screen().getFocused());
 			context.getInput().pressKey(GLFW.GLFW_KEY_TAB);
 			context.waitTicks(5);
 			var focused1 = context.computeOnClient(mc -> mc.gui.screen().getFocused());
 			if (focused1 == null || focused1 == focused0) {
-				throw new AssertionError("Tab setzt keinen neuen Fokus");
+				throw new AssertionError("Tab does not refocus");
 			}
 			context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
 			context.waitForScreen(GentleBuildScreen.class);
 			context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
 			context.waitTicks(10);
 			if (screen(context) != null) {
-				throw new AssertionError("Escape schließt den Bildschirm nicht");
+				throw new AssertionError("Escape does not close the screen");
 			}
 			context.takeScreenshot("ui-ingame-hud-empty");
 		} finally {

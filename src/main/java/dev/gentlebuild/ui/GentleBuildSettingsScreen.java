@@ -26,8 +26,8 @@ import dev.gentlebuild.config.BuildConfig;
 import dev.gentlebuild.nav.LevelNavWorld;
 
 /**
- * G → Einstellungen. One draft copy across six categories; raw field text
- * survives tab/page switches and resizes. "Speichern" stays disabled until
+ * G → Settings. One draft copy across six categories; raw field text
+ * survives tab/page switches and resizes. "Save" stays disabled until
  * every field parses and the draft validates; nothing is written before an
  * explicit save, and the controller only swaps the live config after a
  * successful atomic disk write.
@@ -39,7 +39,7 @@ public class GentleBuildSettingsScreen extends Screen {
 	private static final int WIDGET_W = 104;
 	private static final int BTN_H = 20;
 	private static final int FOOTER = 30;
-	private static final String[] TABS = {"Bauen", "Timings", "Blick", "Bewegung", "Pausen", "HUD"};
+	private static final String[] TABS = {"Build", "Timings", "Look", "Movement", "Pauses", "HUD"};
 
 	private enum Kind { INT, DOUBLE, TEXT, BOOL, CORNER }
 
@@ -59,21 +59,21 @@ public class GentleBuildSettingsScreen extends Screen {
 	private Button saveButton;
 
 	public GentleBuildSettingsScreen(Screen parent) {
-		super(Component.literal("GentleBuild — Einstellungen"));
+		super(Component.literal("GentleBuild — Settings"));
 		this.parent = parent;
 		this.draft = BuildController.get().config().copy();
 	}
 
 	private static String onOff(boolean v) {
-		return v ? "an" : "aus";
+		return v ? "on" : "off";
 	}
 
 	private static String cornerLabel(BuildConfig.HudCorner c) {
 		return switch (c == null ? BuildConfig.HudCorner.TOP_LEFT : c) {
-			case TOP_LEFT -> "Oben links";
-			case TOP_RIGHT -> "Oben rechts";
-			case BOTTOM_LEFT -> "Unten links";
-			case BOTTOM_RIGHT -> "Unten rechts";
+			case TOP_LEFT -> "Top left";
+			case TOP_RIGHT -> "Top right";
+			case BOTTOM_LEFT -> "Bottom left";
+			case BOTTOM_RIGHT -> "Bottom right";
 		};
 	}
 
@@ -89,144 +89,153 @@ public class GentleBuildSettingsScreen extends Screen {
 	private List<Field> fields(int tab) {
 		List<Field> f = new ArrayList<>();
 		switch (tab) {
-			case 0 -> { // Bauen
-				f.add(new Field("scaffoldBlock", "Stützblock (Block-ID)",
-						"Registrierte Block-ID wie minecraft:dirt. Nur Vollblöcke ohne "
-								+ "Entity/Inhalt, kein Fallblock, kein TNT, keine Signalquelle.",
+			case 0 -> { // Build
+				f.add(new Field("scaffoldBlock", "Support block (block id)",
+						"Registered block id like minecraft:dirt. Full cubes only, no "
+								+ "entity/content, no falling block, no TNT, no signal source.",
 						Kind.TEXT, c -> c.scaffoldBlock,
 						(c, v) -> { c.scaffoldBlock = v.trim(); return true; }));
-				f.add(new Field("allowTemporarySupports", "Temporäre Stützen",
-						"Der Bot darf eigene Gerüstblöcke setzen und später wieder abbauen.",
+				f.add(new Field("allowTemporarySupports", "Temporary supports",
+						"The builder may place its own scaffold blocks and remove them later.",
 						Kind.BOOL, c -> onOff(c.allowTemporarySupports),
 						(c, v) -> { c.allowTemporarySupports = !c.allowTemporarySupports; return true; }));
-				f.add(new Field("automaticRepairs", "Automatische Reparatur",
-						"Gefundene eigene Fehler werden innerhalb des Limits automatisch behoben.",
+				f.add(new Field("layerByLayer", "Layer by layer",
+						"Build strictly bottom-up: the lowest unfinished layer "
+								+ "is completed before the next one starts.",
+						Kind.BOOL, c -> onOff(c.layerByLayer),
+						(c, v) -> { c.layerByLayer = !c.layerByLayer; return true; }));
+				f.add(new Field("automaticRepairs", "Automatic repair",
+						"Detected own mistakes are fixed automatically within the limit.",
 						Kind.BOOL, c -> onOff(c.automaticRepairs),
 						(c, v) -> { c.automaticRepairs = !c.automaticRepairs; return true; }));
-				f.add(new Field("maxRepairRounds", "Reparatur-Runden",
-						"Maximale Reparaturdurchgänge pro Prüfung, 1..5.",
+				f.add(new Field("maxRepairRounds", "Repair rounds",
+						"Maximum repair passes per verification, 1..5.",
 						Kind.INT, c -> String.valueOf(c.maxRepairRounds),
 						(c, v) -> setInt(v, x -> c.maxRepairRounds = x)));
-				f.add(new Field("checkpointStructureBlocks", "Checkpoint Struktur",
-						"Struktur-Bauschritte bis zur Zwischenprüfung, 5..10.",
+				f.add(new Field("checkpointStructureBlocks", "Checkpoint structure",
+						"Structure build steps between checkpoint audits, 5..10.",
 						Kind.INT, c -> String.valueOf(c.checkpointStructureBlocks),
 						(c, v) -> setInt(v, x -> c.checkpointStructureBlocks = x)));
-				f.add(new Field("checkpointSensitiveBlocks", "Checkpoint sensibel",
-						"Schritte mit Mechanik/Flüssigkeit bis zur Prüfung, 5..10, höchstens Struktur-Limit.",
+				f.add(new Field("checkpointSensitiveBlocks", "Checkpoint sensitive",
+						"Mechanism/fluid steps between audits, 5..10, at most the structure limit.",
 						Kind.INT, c -> String.valueOf(c.checkpointSensitiveBlocks),
 						(c, v) -> setInt(v, x -> c.checkpointSensitiveBlocks = x)));
 			}
-			case 1 -> { // Timings (1 Tick = 50 ms bei 20 TPS)
-				f.add(new Field("minPlaceIntervalTicks", "Platzier-Intervall",
-						"Ticks zwischen Platzierungen (1 Tick = 50 ms), 2..100.",
+			case 1 -> { // Timings (1 tick = 50 ms at 20 TPS)
+				f.add(new Field("minPlaceIntervalTicks", "Placement interval",
+						"Ticks between placements (1 tick = 50 ms), 2..100.",
 						Kind.INT, c -> String.valueOf(c.minPlaceIntervalTicks),
 						(c, v) -> setInt(v, x -> c.minPlaceIntervalTicks = x)));
-				f.add(new Field("confirmationTimeoutTicks", "Serverbestätigung",
-						"Maximale Wartezeit auf Server-Ack in Ticks, 20..1200.",
+				f.add(new Field("confirmationTimeoutTicks", "Server acknowledgement",
+						"Maximum wait for a server ack in ticks, 20..1200.",
 						Kind.INT, c -> String.valueOf(c.confirmationTimeoutTicks),
 						(c, v) -> setInt(v, x -> c.confirmationTimeoutTicks = x)));
-				f.add(new Field("settleTicks", "Beruhigung vor Klick",
-						"Blick muss diese Ticks ruhig stehen (1 Tick = 50 ms), 2..100.",
+				f.add(new Field("settleTicks", "Settle before click",
+						"The view must stay still for this many ticks (1 tick = 50 ms), 2..100.",
 						Kind.INT, c -> String.valueOf(c.settleTicks),
 						(c, v) -> setInt(v, x -> c.settleTicks = x)));
-				f.add(new Field("hotbarSwitchTicks", "Hotbar-Wechsel",
-						"Mindest-Ticks nach Hotbar-Slotwechsel vor dem Klick, 1..20.",
+				f.add(new Field("hotbarSwitchTicks", "Hotbar switch",
+						"Minimum ticks after a hotbar slot switch before clicking, 1..20.",
 						Kind.INT, c -> String.valueOf(c.hotbarSwitchTicks),
 						(c, v) -> setInt(v, x -> c.hotbarSwitchTicks = x)));
-				f.add(new Field("mainRefillTicks", "Inventar-Nachfüllen",
-						"Mindest-Ticks nach Hauptinventar-Swap vor dem Klick, 1..20.",
+				f.add(new Field("mainRefillTicks", "Inventory refill",
+						"Minimum ticks after a main-inventory swap before clicking, 1..20.",
 						Kind.INT, c -> String.valueOf(c.mainRefillTicks),
 						(c, v) -> setInt(v, x -> c.mainRefillTicks = x)));
+				f.add(new Field("stallAuditTicks", "Stall check",
+						"Ticks without progress until an intermediate audit runs, 60..2400.",
+						Kind.INT, c -> String.valueOf(c.stallAuditTicks),
+						(c, v) -> setInt(v, x -> c.stallAuditTicks = x)));
 			}
-			case 2 -> { // Blick
-				f.add(new Field("naturalMovement", "Natürlicher Blick",
-						"Varierendes Drehtempo und kleine Blickkorrekturen. Der Platzierblick bleibt exakt.",
+			case 2 -> { // Look
+				f.add(new Field("naturalMovement", "Natural look",
+						"Varying turn speed and small look corrections. The placement aim stays exact.",
 						Kind.BOOL, c -> onOff(c.naturalMovement),
 						(c, v) -> { c.naturalMovement = !c.naturalMovement; return true; }));
-				f.add(new Field("maxYawSpeed", "Max. Yaw-Tempo",
-						"Grad/Sekunde, 10..800.",
+				f.add(new Field("maxYawSpeed", "Max. yaw speed",
+						"Degrees/second, 10..800.",
 						Kind.DOUBLE, c -> d2s(c.maxYawSpeed),
 						(c, v) -> setDouble(v, x -> c.maxYawSpeed = x)));
-				f.add(new Field("maxPitchSpeed", "Max. Pitch-Tempo",
-						"Grad/Sekunde, 10..720.",
+				f.add(new Field("maxPitchSpeed", "Max. pitch speed",
+						"Degrees/second, 10..720.",
 						Kind.DOUBLE, c -> d2s(c.maxPitchSpeed),
 						(c, v) -> setDouble(v, x -> c.maxPitchSpeed = x)));
-				f.add(new Field("maxAngularAccel", "Max. Drehbeschleunigung",
-						"Grad/Sekunde², 50..12000.",
+				f.add(new Field("maxAngularAccel", "Max. angular accel",
+						"Degrees/second², 50..12000.",
 						Kind.DOUBLE, c -> d2s(c.maxAngularAccel),
 						(c, v) -> setDouble(v, x -> c.maxAngularAccel = x)));
 				f.add(new Field("microCorrectionStrength", "Variation",
-						"Stärke der Blickvariation, 0.0..1.0.",
+						"Strength of the look variation, 0.0..1.0.",
 						Kind.DOUBLE, c -> d2s(c.microCorrectionStrength),
 						(c, v) -> setDouble(v, x -> c.microCorrectionStrength = x)));
 			}
-			case 3 -> { // Bewegung
-				f.add(new Field("sprintOnLongWalks", "Sprinten bei langen Wegen",
-						"Der Bot sprintet nur auf sicheren, langen Wegabschnitten.",
+			case 3 -> { // Movement
+				f.add(new Field("sprintOnLongWalks", "Sprint on long walks",
+						"The builder sprints only on safe, long path segments.",
 						Kind.BOOL, c -> onOff(c.sprintOnLongWalks),
 						(c, v) -> { c.sprintOnLongWalks = !c.sprintOnLongWalks; return true; }));
-				f.add(new Field("maxPlanNodes", "Wegsuche-Limit",
-						"Maximale A*-Knoten pro Wegplanung (fortgeschritten), 256..65536.",
+				f.add(new Field("maxPlanNodes", "Pathfinding limit",
+						"Maximum A* nodes per path plan (advanced), 256..65536.",
 						Kind.INT, c -> String.valueOf(c.maxPlanNodes),
 						(c, v) -> setInt(v, x -> c.maxPlanNodes = x)));
 			}
-			case 4 -> { // Pausen
-				f.add(new Field("automaticPauses", "Automatische Pausen",
-						"Kurzpausen und AFK-Pausen; nur auf sicherem Boden.",
+			case 4 -> { // Pauses
+				f.add(new Field("automaticPauses", "Automatic pauses",
+						"Short breaks and AFK pauses; only on safe ground.",
 						Kind.BOOL, c -> onOff(c.automaticPauses),
 						(c, v) -> { c.automaticPauses = !c.automaticPauses; return true; }));
-				f.add(new Field("shortPauseMinActions", "Kurzpause ab (Aktionen)",
-						"Aktionen bis zur ersten möglichen Kurzpause, 1..100.",
+				f.add(new Field("shortPauseMinActions", "Short pause after (actions)",
+						"Actions before the first possible short pause, 1..100.",
 						Kind.INT, c -> String.valueOf(c.shortPauseMinActions),
 						(c, v) -> setInt(v, x -> c.shortPauseMinActions = x)));
-				f.add(new Field("shortPauseMaxActions", "Kurzpause ab (max.)",
-						"Aktionen bis spätestens zur Kurzpause, 1..100, ≥ min.",
+				f.add(new Field("shortPauseMaxActions", "Short pause after (max.)",
+						"Actions by which a short pause must happen, 1..100, >= min.",
 						Kind.INT, c -> String.valueOf(c.shortPauseMaxActions),
 						(c, v) -> setInt(v, x -> c.shortPauseMaxActions = x)));
-				f.add(new Field("shortPauseMinTicks", "Kurzpausen-Dauer (min)",
+				f.add(new Field("shortPauseMinTicks", "Short pause length (min)",
 						"Ticks, 1..200.",
 						Kind.INT, c -> String.valueOf(c.shortPauseMinTicks),
 						(c, v) -> setInt(v, x -> c.shortPauseMinTicks = x)));
-				f.add(new Field("shortPauseMaxTicks", "Kurzpausen-Dauer (max)",
-						"Ticks, 1..200, ≥ min.",
+				f.add(new Field("shortPauseMaxTicks", "Short pause length (max)",
+						"Ticks, 1..200, >= min.",
 						Kind.INT, c -> String.valueOf(c.shortPauseMaxTicks),
 						(c, v) -> setInt(v, x -> c.shortPauseMaxTicks = x)));
-				f.add(new Field("afkIntervalMinTicks", "AFK-Intervall (min)",
-						"Ticks zwischen AFK-Pausen, 20..72000.",
+				f.add(new Field("afkIntervalMinTicks", "AFK interval (min)",
+						"Ticks between AFK pauses, 20..72000.",
 						Kind.INT, c -> String.valueOf(c.afkIntervalMinTicks),
 						(c, v) -> setInt(v, x -> c.afkIntervalMinTicks = x)));
-				f.add(new Field("afkIntervalMaxTicks", "AFK-Intervall (max)",
-						"Ticks, 20..72000, ≥ min.",
+				f.add(new Field("afkIntervalMaxTicks", "AFK interval (max)",
+						"Ticks, 20..72000, >= min.",
 						Kind.INT, c -> String.valueOf(c.afkIntervalMaxTicks),
 						(c, v) -> setInt(v, x -> c.afkIntervalMaxTicks = x)));
-				f.add(new Field("afkDurationMinTicks", "AFK-Dauer (min)",
+				f.add(new Field("afkDurationMinTicks", "AFK length (min)",
 						"Ticks, 1..100.",
 						Kind.INT, c -> String.valueOf(c.afkDurationMinTicks),
 						(c, v) -> setInt(v, x -> c.afkDurationMinTicks = x)));
-				f.add(new Field("afkDurationMaxTicks", "AFK-Dauer (max)",
-						"Ticks, 1..100 (höchstens 5 s), ≥ min.",
+				f.add(new Field("afkDurationMaxTicks", "AFK length (max)",
+						"Ticks, 1..100 (at most 5 s), >= min.",
 						Kind.INT, c -> String.valueOf(c.afkDurationMaxTicks),
 						(c, v) -> setInt(v, x -> c.afkDurationMaxTicks = x)));
 			}
 			case 5 -> { // HUD
-				f.add(new Field("hudEnabled", "HUD anzeigen",
-						"Statusanzeige im Spiel ein-/ausblenden.",
+				f.add(new Field("hudEnabled", "Show HUD",
+						"Show or hide the in-game status overlay.",
 						Kind.BOOL, c -> onOff(c.hudEnabled),
 						(c, v) -> { c.hudEnabled = !c.hudEnabled; return true; }));
-				f.add(new Field("hudCorner", "HUD-Ecke",
-						"Bildschirm-Ecke der Anzeige.",
+				f.add(new Field("hudCorner", "HUD corner",
+						"Screen corner of the overlay.",
 						Kind.CORNER, c -> cornerLabel(c.hudCorner),
 						(c, v) -> { c.hudCorner = nextCorner(c.hudCorner); return true; }));
-				f.add(new Field("hudCompact", "HUD kompakt",
-						"Nur Name, Zustand und wichtigste Meldung (3 Zeilen).",
+				f.add(new Field("hudCompact", "Compact HUD",
+						"Only name, state and the most important message (3 lines).",
 						Kind.BOOL, c -> onOff(c.hudCompact),
 						(c, v) -> { c.hudCompact = !c.hudCompact; return true; }));
-				f.add(new Field("hudScale", "HUD-Größe",
-						"Skalierung, 0.75..1.5.",
+				f.add(new Field("hudScale", "HUD scale",
+						"Scaling, 0.75..1.5.",
 						Kind.DOUBLE, c -> d2s(c.hudScale),
 						(c, v) -> setDouble(v, x -> c.hudScale = x)));
-				f.add(new Field("hudOpacity", "HUD-Deckkraft",
-						"Prozent, 50..100.",
+				f.add(new Field("hudOpacity", "HUD opacity",
+						"Percent, 50..100.",
 						Kind.INT, c -> String.valueOf(c.hudOpacity),
 						(c, v) -> setInt(v, x -> c.hudOpacity = x)));
 			}
@@ -262,7 +271,7 @@ public class GentleBuildSettingsScreen extends Screen {
 							? setInt(rawText, x -> {})
 							: setDouble(rawText, x -> {});
 					if (!ok) {
-						fieldErrors.put(f.id(), "keine gültige Zahl");
+						fieldErrors.put(f.id(), "not a valid number");
 					}
 				}
 			}
@@ -296,18 +305,18 @@ public class GentleBuildSettingsScreen extends Screen {
 		}
 		String trimmed = id.trim();
 		if (!trimmed.matches("[a-z0-9_.-]+:[a-z0-9_./-]+")) {
-			return "ungültige Block-ID (Format z.B. minecraft:dirt)";
+			return "invalid block id (format e.g. minecraft:dirt)";
 		}
 		var block = BuiltInRegistries.BLOCK.getValue(Identifier.parse(trimmed));
 		if (block == null || block == Blocks.AIR || block.asItem() == Items.AIR) {
-			return "unbekannter Block oder kein Block-Item";
+			return "unknown block or not a block item";
 		}
 		if (block instanceof BaseEntityBlock || block instanceof FallingBlock
 				|| block instanceof TntBlock
 				|| block.defaultBlockState().isSignalSource()
 				|| !block.defaultBlockState().isCollisionShapeFullBlock(
 						new LevelNavWorld(this.minecraft.level), net.minecraft.core.BlockPos.ZERO)) {
-			return "kein geeigneter Stützblock (Entity/Fallblock/TNT/Signal)";
+			return "not a suitable support block (entity/falling/TNT/signal)";
 		}
 		return null;
 	}
@@ -371,7 +380,7 @@ public class GentleBuildSettingsScreen extends Screen {
 					if (f.set().apply(draft, v)) {
 						fieldErrors.remove(f.id());
 					} else {
-						fieldErrors.put(f.id(), "keine gültige Zahl");
+						fieldErrors.put(f.id(), "not a valid number");
 					}
 					// re-validate cross-field pairs without rebuilding mid-typing
 					List<String> keep = new ArrayList<>(otherErrors);
@@ -418,19 +427,19 @@ public class GentleBuildSettingsScreen extends Screen {
 
 		int fy = this.height - FOOTER + 5;
 		int fw = (panelW - 16) / 3;
-		saveButton = Button.builder(Component.literal("Speichern"), b -> save())
+		saveButton = Button.builder(Component.literal("Save"), b -> save())
 				.bounds(x0, fy, fw, BTN_H)
 				.tooltip(Tooltip.create(Component.literal(
-						"Speichert auf Festplatte und übernimmt sofort.")))
+						"Writes to disk and applies immediately.")))
 				.build();
 		saveButton.active = valid();
 		addRenderableWidget(saveButton);
-		addRenderableWidget(Button.builder(Component.literal("Abbrechen"),
+		addRenderableWidget(Button.builder(Component.literal("Cancel"),
 				b -> this.minecraft.gui.setScreen(parent))
 				.bounds(x0 + fw + 8, fy, fw, BTN_H)
-				.tooltip(Tooltip.create(Component.literal("Verwirft alle ungespeicherten Änderungen.")))
+				.tooltip(Tooltip.create(Component.literal("Discards all unsaved changes.")))
 				.build());
-		addRenderableWidget(Button.builder(Component.literal("Alle Standards"), b -> {
+		addRenderableWidget(Button.builder(Component.literal("All defaults"), b -> {
 					draft = new BuildConfig();
 					raw.clear();
 					fieldErrors.clear();
@@ -438,7 +447,7 @@ public class GentleBuildSettingsScreen extends Screen {
 				})
 				.bounds(x0 + 2 * (fw + 8), fy, fw, BTN_H)
 				.tooltip(Tooltip.create(Component.literal(
-						"Setzt den Entwurf zurück; erst 'Speichern' übernimmt.")))
+						"Resets the draft; only 'Save' applies it.")))
 				.build());
 	}
 
@@ -451,7 +460,7 @@ public class GentleBuildSettingsScreen extends Screen {
 		if (BuildController.get().saveConfig(draft)) {
 			this.minecraft.gui.setScreen(parent);
 		} else {
-			saveError = "Speichern fehlgeschlagen (Datei nicht schreibbar?)";
+			saveError = "Save failed (file not writable?)";
 			rebuildWidgets();
 		}
 	}
@@ -459,7 +468,7 @@ public class GentleBuildSettingsScreen extends Screen {
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-		graphics.centeredText(this.font, "GentleBuild — Einstellungen: " + TABS[tab],
+		graphics.centeredText(this.font, "GentleBuild — Settings: " + TABS[tab],
 				this.width / 2, 10, 0xFFFFFFFF);
 		int panelW = Math.min(MAX_W, this.width - 2 * MIN_MARGIN);
 		int x0 = (this.width - panelW) / 2;
@@ -477,9 +486,9 @@ public class GentleBuildSettingsScreen extends Screen {
 			}
 		}
 		if (tab == 3 && page == Math.max(0, (fs.size() - 1) / Math.max(1, rowsPerPage))) {
-			graphics.text(this.font, "Baufolge: automatisch, schichtweise und nach",
+			graphics.text(this.font, "Build order: automatic, layered and",
 					x0 + 2, bodyTop + rowsPerPage * ROW + 4, 0xFF94A3B8);
-			graphics.text(this.font, "Abhängigkeiten; erreichbare Blöcke werden gebündelt.",
+			graphics.text(this.font, "dependency-aware; reachable blocks are batched.",
 					x0 + 2, bodyTop + rowsPerPage * ROW + 14, 0xFF94A3B8);
 		}
 		int ey = this.height - FOOTER - (otherErrors.isEmpty() && saveError.isEmpty() ? 0 : 12);

@@ -180,7 +180,7 @@ class FinalVerifierTest extends McTestBase {
 		assertEquals(FinalVerifier.MAX_MISMATCHES, v.differences().size());
 		assertEquals(FinalVerifier.MAX_MISMATCHES + 50, v.mismatchCount());
 		assertTrue(v.mismatches().get(v.mismatches().size() - 1)
-				.contains("weitere"));
+				.contains("more"));
 	}
 
 	// ---- construction checkpoints ----
