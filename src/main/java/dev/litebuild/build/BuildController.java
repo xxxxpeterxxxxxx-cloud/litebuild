@@ -2643,15 +2643,27 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 
 		// Progress check: after a repair round, at least one approved cell
 		// must have reached its final state — otherwise stop instead of
-		// burning the remaining rounds on an identical outcome.
+		// burning the remaining rounds on an identical outcome. Only
+		// judged when the previous round actually dispatched work —
+		// resume clears roundApproved while repairRound stays >0, and an
+		// empty evidence set must not veto a fresh round. REMOVE cells
+		// (not in the blueprint) count as done once they read air again.
 		boolean scoped = checkpointScope != null;
+		boolean hadRoundWork = !roundApproved.isEmpty();
 		boolean progressed = false;
 		for (BlockPos pos : roundApproved) {
+			if (!world.isLoaded(pos)) {
+				continue;
+			}
 			BlockState exp = scoped
 					? checkpointScope.blocks().get(pos) : blueprint.blocks().get(pos);
-			if (exp != null && world.isLoaded(pos) && (scoped
-					? StateRules.constructionEquivalent(exp, world.getBlockState(pos))
-					: StateRules.finalEquivalent(exp, world.getBlockState(pos)))) {
+			BlockState liveNow = world.getBlockState(pos);
+			boolean done = exp != null
+					? (scoped
+							? StateRules.constructionEquivalent(exp, liveNow)
+							: StateRules.finalEquivalent(exp, liveNow))
+					: liveNow.isAir();
+			if (done) {
 				progressed = true;
 				repairedPositions.add(pos);
 			}
@@ -2665,7 +2677,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 			return;
 		}
 		int round = scoped ? checkpointRepairRound : repairRound;
-		if (approved.isEmpty() || (round > 0 && !progressed)) {
+		if (approved.isEmpty() || (hadRoundWork && !progressed)) {
 			pause("Verification: " + total + " deviations, no further "
 					+ "automatic repair possible");
 			return;

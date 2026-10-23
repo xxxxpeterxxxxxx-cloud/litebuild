@@ -9,21 +9,21 @@
 	},
 	"entrypoints": {
 		"fabric-client-gametest": [
+			"dev.litebuild.gametest.LiteBuildAckTest",
+			"dev.litebuild.gametest.LiteBuildBigBuildTest",
+			"dev.litebuild.gametest.LiteBuildCheckpointTest",
 			"dev.litebuild.gametest.LiteBuildGameTest",
+			"dev.litebuild.gametest.LiteBuildHardTest",
+			"dev.litebuild.gametest.LiteBuildImportTest",
 			"dev.litebuild.gametest.LiteBuildInventoryTest",
 			"dev.litebuild.gametest.LiteBuildRepairTest",
-			"dev.litebuild.gametest.LiteBuildScenario2Test",
-			"dev.litebuild.gametest.LiteBuildSpeedTest",
-			"dev.litebuild.gametest.LiteBuildHardTest",
-			"dev.litebuild.gametest.LiteBuildCheckpointTest",
-			"dev.litebuild.gametest.LiteBuildUiTest",
-			"dev.litebuild.gametest.LiteBuildAckTest",
-			"dev.litebuild.gametest.LiteBuildImportTest",
-			"dev.litebuild.gametest.LiteBuildStallTest",
-			"dev.litebuild.gametest.LiteBuildScaleTest",
-			"dev.litebuild.gametest.LiteBuildSchemTest",
 			"dev.litebuild.gametest.LiteBuildRewriteAckTest",
-			"dev.litebuild.gametest.LiteBuildBigBuildTest"
+			"dev.litebuild.gametest.LiteBuildScaleTest",
+			"dev.litebuild.gametest.LiteBuildScenario2Test",
+			"dev.litebuild.gametest.LiteBuildSchemTest",
+			"dev.litebuild.gametest.LiteBuildSpeedTest",
+			"dev.litebuild.gametest.LiteBuildStallTest",
+			"dev.litebuild.gametest.LiteBuildUiTest"
 		]
 	},
 	"mixins": [
