@@ -15,7 +15,6 @@ out/
 
 # test evidence (45M+ logs/screenshots)
 validation/
-testserver/
 
 # testserver: keep source, ignore runtime/binaries
 testserver/*
