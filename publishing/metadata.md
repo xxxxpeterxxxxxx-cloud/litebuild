@@ -41,8 +41,8 @@ in `modrinth/` und `curseforge/`.
   Empfohlene Reihenfolge: hero → verify → phases → batch → sprint →
   scaffold → cleanup → menu → settings.
   Generator: `assets/make_gallery.py` (Quellen: `assets/gallery/`).
-- **Featured Version**: `0.1.0-beta.6` (Type: `beta`, Changelog:
-  `changelog/beta-6.md`).
+- **Featured Version**: `0.1.0-beta.7` (Type: `beta`, Changelog:
+  `changelog/beta-7.md`).
 
 ## CurseForge
 
@@ -60,12 +60,12 @@ in `modrinth/` und `curseforge/`.
 - **Required deps** (bei jedem File-Upload als „Required Dependency"
   markieren): Fabric API, Litematica, MaLiLib — jeweils die CF-Projekte
   verlinken, damit der CF-Launcher sie mitzieht.
-- **Files**: `gentlebuild-0.1.0-beta.6.jar`, Release Type `Beta`,
-  Display name `GentleBuild 0.1.0-beta.6 (MC 26.2)`.
+- **Files**: `gentlebuild-0.1.0-beta.7.jar`, Release Type `Beta`,
+  Display name `GentleBuild 0.1.0-beta.7 (MC 26.2)`.
 
 ## Version-Changelog-Pflicht
 
-Jeder Upload braucht ein Changelog — Template in `changelog/beta-6.md`.
+Jeder Upload braucht ein Changelog — Template in `changelog/beta-7.md`.
 Regel: nur belegte Aussagen (Teststand in `validation/`), keine
 Anticheat-Garantie, Hinweis „Serverside rules apply" beibehalten.
 

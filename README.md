@@ -213,7 +213,7 @@ have succeeded.
 
 1. Fabric Loader **0.19.5+** for Minecraft **26.2**
 2. Mods: `fabric-api-0.161.0+26.2`, `litematica-fabric-26.2-0.28.8`,
-   `malilib-fabric-26.2-0.29.6`, `gentlebuild-0.1.0-beta.6.jar`
+   `malilib-fabric-26.2-0.29.6`, `gentlebuild-0.1.0-beta.7.jar`
 3. Java **25** is required.
 
 Compatibility: `fabric.mod.json` allows `~26.2` (all 26.2.x patches),
@@ -231,8 +231,8 @@ Litematica/MaLiLib only exist for Fabric.
 ./gradlew build
 ```
 
-Produces `build/libs/gentlebuild-0.1.0-beta.6.jar` and
-`gentlebuild-0.1.0-beta.6-sources.jar`. JDK 25 is required via the
+Produces `build/libs/gentlebuild-0.1.0-beta.7.jar` and
+`gentlebuild-0.1.0-beta.7-sources.jar`. JDK 25 is required via the
 Java toolchain (e.g. `JAVA_HOME` or Gradle auto-detection;
 no project-specific paths in `gradle.properties`).
 
