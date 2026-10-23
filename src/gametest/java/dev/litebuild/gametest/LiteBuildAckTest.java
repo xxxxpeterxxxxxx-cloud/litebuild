@@ -108,7 +108,13 @@ public final class LiteBuildAckTest implements FabricClientGameTest {
 		// Let the transaction run well past confirmationTimeoutTicks. The
 		// gated cell must stay unverified and the run must never complete:
 		// re-queue while other acks flowed, else the silent-server pause.
-		for (int t = 0; t < ACK_TIMEOUT * 3; t += 10) {
+		// The bounded branch ("Late acknowledgement"/"Server
+		// acknowledgement missing") only fires once NO acknowledgement
+		// has been confirmed for a long silence window (400 ticks) —
+		// retries of the withheld ack keep retrying until then, so the
+		// budget must cover timeout + silence, not just 3 timeouts.
+		boolean terminal = false;
+		for (int t = 0; t < 1200 && !terminal; t += 10) {
 			context.waitTicks(10);
 			var c = BuildController.get();
 			if (c.state() == RunState.COMPLETE) {
@@ -123,9 +129,10 @@ public final class LiteBuildAckTest implements FabricClientGameTest {
 				throw new AssertionError("verified without the gated ack: "
 						+ c.diagnosticState());
 			}
+			terminal = c.statusLines().toString().contains("acknowledgement");
 		}
 		String lines = BuildController.get().statusLines().toString();
-		if (!lines.contains("acknowledgement")) {
+		if (!terminal) {
 			throw new AssertionError("no ack-timeout branch observed: " + lines);
 		}
 		System.out.println("[GT-ACK] delayed-ack behaviour: "
