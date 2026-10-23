@@ -152,7 +152,8 @@ class BuildProgressStoreTest extends McTestBase {
 				Set.of(new BlockPos(0, 0, 0), new BlockPos(1, 0, 0),
 						new BlockPos(0, 0, 1), new BlockPos(7, 7, 7)),
 				planner, bp,
-				pos -> live.getOrDefault(pos, Blocks.AIR.defaultBlockState()));
+				pos -> live.getOrDefault(pos, Blocks.AIR.defaultBlockState()),
+				true, true);
 
 		assertEquals(2, applied);
 		assertTrue(planner.isVerified(new BlockPos(0, 0, 0)));
@@ -160,5 +161,33 @@ class BuildProgressStoreTest extends McTestBase {
 		// Mismatched and non-blueprint cells stay unverified → re-queued.
 		assertFalse(planner.isVerified(new BlockPos(1, 0, 0)));
 		assertFalse(planner.isComplete());
+	}
+
+	/** Stored fluid/activation cells must stay pending while their phase
+	 * is disabled — restored progress must never bypass phase gating. */
+	@Test
+	void applyVerifiedRespectsPhaseAuthorization() {
+		BlockPos waterPos = new BlockPos(2, 0, 0);
+		Map<BlockPos, BlockState> cells = cells();
+		cells.put(waterPos, Blocks.WATER.defaultBlockState());
+		Blueprint bp = new Blueprint("test", cells, Set.of(), 0, "fp");
+		Planner planner = new Planner(bp);
+
+		Map<BlockPos, BlockState> live = new HashMap<>(cells);
+		Set<BlockPos> stored = Set.copyOf(cells.keySet());
+
+		int applied = BuildProgressStore.applyVerified(stored, planner, bp,
+				pos -> live.getOrDefault(pos, Blocks.AIR.defaultBlockState()),
+				false, true);
+
+		assertEquals(3, applied);
+		assertTrue(planner.isVerified(new BlockPos(0, 0, 0)));
+		assertFalse(planner.isVerified(waterPos));
+
+		// Enabling fluids lets the same stored cell verify on retry.
+		BuildProgressStore.applyVerified(stored, planner, bp,
+				pos -> live.getOrDefault(pos, Blocks.AIR.defaultBlockState()),
+				true, true);
+		assertTrue(planner.isVerified(waterPos));
 	}
 }

@@ -169,11 +169,11 @@ if __name__ == "__main__":
          "Sprints when it makes sense",
          "Real sprint input on long safe legs — never faster than a player could be",
          "gallery-sprint.png", icon)
-    card(g("0027_ui-overview.png"),
+    card(g("ui-overview-en.png"),
          "One key, full control",
-         "Blueprint selection, gates, verify & fix, cleanup — press G in game",
+         "Blueprint selection, preflight, verify & fix, cleanup — press G in game",
          "gallery-menu.png", icon)
-    card(g("0032_ui-settings-hud.png"),
+    card(g("ui-settings-en.png"),
          "Everything is configurable",
          "Scaffold blocks, timings, head movement, pauses, checkpoints, HUD — drafts validated on save",
          "gallery-settings.png", icon)

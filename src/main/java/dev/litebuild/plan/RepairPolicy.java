@@ -88,7 +88,7 @@ public final class RepairPolicy {
 			case MISSING -> {
 				if (expected.getBlock() instanceof LiquidBlock) {
 					if (expected.getValue(BlockStateProperties.LEVEL) != 0) {
-						return Decision.manual(m, "Quelle/Fluss pruefen");
+						return Decision.manual(m, "Check source/flow");
 					}
 					return fluidsEnabled
 							? Decision.of(m, Kind.FILL, "Place source block")
@@ -112,7 +112,7 @@ public final class RepairPolicy {
 				BlockState step = StateRules.nextInteractionStep(expected, live);
 				if (step != null) {
 					if (!activationEnabled && isLiveControl(expected)) {
-						return Decision.manual(m, "Activation freigeben");
+						return Decision.manual(m, "Enable activation");
 					}
 					return Decision.of(m, Kind.ADJUST,
 							"Interaktionsschritt (Verzoegerung/Schalter)");
@@ -132,7 +132,7 @@ public final class RepairPolicy {
 					// repairs may settle this — never re-break wire/stairs for
 					// a transient shape.
 					return Decision.manual(m,
-							"Nachbarzustand/Verbindung pruefen");
+							"Check neighbor state/connection");
 				}
 				return breakOrManual(m, live, blueprint, world, owned,
 						playerFeet, true);
@@ -206,7 +206,7 @@ public final class RepairPolicy {
 		if (playerFeet != null
 				&& (pos.equals(playerFeet.below()) || pos.equals(playerFeet)
 				|| pos.equals(playerFeet.above()))) {
-			return "Spieler steht darauf/darin";
+			return "Player is standing on/inside it";
 		}
 		// Any non-air block directly above would drop/collapse onto the cell.
 		if (!world.isLoaded(pos.above())

@@ -86,7 +86,7 @@ public final class BlueprintImporter {
 			totalCells = Math.addExact(totalCells, cells);
 			if (totalCells > MAX_REGION_CELLS) {
 				errors.add(new BuildIssue(BuildIssue.Severity.BLOCKED, BlockPos.ZERO,
-						"Selection too large: >" + MAX_REGION_CELLS + " Zellen"));
+						"Selection too large: >" + MAX_REGION_CELLS + " cells"));
 				return null;
 			}
 			Map<BlockPos, CompoundData> blockEntities = schematic.getBlockEntityMapForRegion(name);

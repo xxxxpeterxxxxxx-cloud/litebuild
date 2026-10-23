@@ -375,10 +375,11 @@ public class BuildController {
 		Minecraft live = Minecraft.getInstance();
 		if (live.level != null) {
 			int restored = progress.applyVerified(planner, blueprint,
-					pos -> live.level.getBlockState(pos));
+					pos -> live.level.getBlockState(pos),
+					config.fluidsEnabled, config.activationEnabled);
 			if (restored > 0) {
 				statusLines.add(0, "Progress restored: " + restored
-						+ " Zellen revalidiert");
+						+ " cells revalidated");
 			}
 		}
 		state = RunState.WALKING;
@@ -630,7 +631,7 @@ public class BuildController {
 			snapshot = null;
 			startAfterSnapshot = false;
 			state = RunState.EMPTY;
-			statusLines.add(0, "Placement waehrend Snapshot veraendert");
+			statusLines.add(0, "Placement changed during snapshot");
 			return;
 		}
 		if (snapshot.tick()) {
@@ -697,7 +698,7 @@ public class BuildController {
 	private void tickBuild(Minecraft mc, LocalPlayer player) {
 		// Placement must never be handed to a stale selection.
 		if (!fingerprintStillValid(mc)) {
-			pause("Placement veraendert");
+			pause("Placement changed");
 			return;
 		}
 		// Fail closed: only a walking decision later this tick re-arms forward.
@@ -1012,7 +1013,12 @@ public class BuildController {
 			BlockState actual = world.getBlockState(t.pos());
 			if (StateRules.constructionEquivalent(t.state(), actual)
 					|| planner.acceptsHalfSlabStage(t, actual)) {
-				markVerified(t);
+				// A matching world state only settles authorized work; a
+				// stale pool entry from a now-disabled phase stays pending.
+				if (Planner.phaseAllowed(t.phase(), config.fluidsEnabled,
+						config.activationEnabled)) {
+					markVerified(t);
+				}
 				it.remove();
 				continue;
 			}
@@ -1188,7 +1194,12 @@ public class BuildController {
 		// Construction match? task done (final verifier checks connections).
 		if (StateRules.constructionEquivalent(target.state(), actual)
 				|| planner.acceptsHalfSlabStage(target, actual)) {
-			markVerified(target);
+			// Disabled phases stay pending even when the cell matches —
+			// they resume verification once the user enables them.
+			if (Planner.phaseAllowed(target.phase(), config.fluidsEnabled,
+					config.activationEnabled)) {
+				markVerified(target);
+			}
 			current = null;
 			return;
 		}
@@ -2600,7 +2611,7 @@ private boolean revalidate(Minecraft mc, LocalPlayer player) {
 		int round = scoped ? checkpointRepairRound : repairRound;
 		if (approved.isEmpty() || (round > 0 && !progressed)) {
 			pause("Verification: " + total + " deviations, no further "
-					+ "automatische Repair moeglich");
+					+ "automatic repair possible");
 			return;
 		}
 		if (round >= config.maxRepairRounds) {

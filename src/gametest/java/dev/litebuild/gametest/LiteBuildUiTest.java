@@ -237,9 +237,9 @@ public final class LiteBuildUiTest implements FabricClientGameTest {
 				assertWidgetsInsideAndDisjoint(context, "pausen-page2");
 			}
 
-			// 'Alle Standards' resets only the draft
+			// 'All defaults' resets only the draft
 			clickTab(context, "Build");
-			context.clickScreenButton("Alle Standards");
+			context.clickScreenButton("All defaults");
 			setBox(context, "Support block (block id)", "minecraft:cobblestone");
 			if (liveHotbarDelay(context) != before) {
 				throw new AssertionError("All-defaults saved without a click");

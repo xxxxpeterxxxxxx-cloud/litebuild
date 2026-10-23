@@ -362,8 +362,14 @@ public class Planner {
 				// A cell already at its full blueprint state (e.g. a
 				// preexisting waterlogged block) satisfies every task there.
 				if (cellMatchesFinal(target.pos(), actual)) {
+					// Only phases the config authorizes are auto-verified —
+					// a matching world cell must not silently satisfy gated
+					// fluid/activation work.
 					for (BuildTarget t : targetsAt(target.pos())) {
-						markVerified(t);
+						if (phaseAllowed(t.phase(), fluidsEnabled,
+								activationEnabled)) {
+							markVerified(t);
+						}
 					}
 					continue;
 				}
@@ -474,6 +480,14 @@ public class Planner {
 			}
 		}
 		return true;
+	}
+
+	/** Phase authorization: disabled phases stay pending even when the
+	 * live cell already matches the blueprint's final state. */
+	public static boolean phaseAllowed(Phase phase, boolean fluidsEnabled,
+									   boolean activationEnabled) {
+		return (phase != Phase.FLUIDS || fluidsEnabled)
+				&& (phase != Phase.ACTIVATION || activationEnabled);
 	}
 
 	/** Live cell equals the blueprint's full desired state for it. */

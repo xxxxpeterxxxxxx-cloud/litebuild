@@ -27,6 +27,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.state.BlockState;
 import dev.litebuild.LiteBuild;
 import dev.litebuild.model.Blueprint;
+import dev.litebuild.model.BuildTarget;
 import dev.litebuild.plan.Planner;
 import dev.litebuild.state.StateRules;
 
@@ -274,17 +275,24 @@ public final class BuildProgressStore {
 	 * resumed blindly.
 	 */
 	public synchronized int applyVerified(Planner planner, Blueprint blueprint,
-										  Function<BlockPos, BlockState> live) {
+										  Function<BlockPos, BlockState> live,
+										  boolean fluidsEnabled,
+										  boolean activationEnabled) {
 		if (record == null) {
 			return 0;
 		}
-		return applyVerified(verified, planner, blueprint, live);
+		return applyVerified(verified, planner, blueprint, live,
+				fluidsEnabled, activationEnabled);
 	}
 
-	/** Shared revalidation core (instance-independent for tests). */
+	/** Shared revalidation core (instance-independent for tests). Only
+	 * tasks in currently authorized phases are restored — a stored match
+	 * must not silently satisfy gated fluid/activation work. */
 	public static int applyVerified(Collection<BlockPos> stored, Planner planner,
 									Blueprint blueprint,
-									Function<BlockPos, BlockState> live) {
+									Function<BlockPos, BlockState> live,
+									boolean fluidsEnabled,
+									boolean activationEnabled) {
 		int applied = 0;
 		for (BlockPos pos : stored) {
 			BlockState expected = blueprint.blocks().get(pos);
@@ -292,8 +300,18 @@ public final class BuildProgressStore {
 				continue;
 			}
 			BlockState actual = live.apply(pos);
-			if (actual != null && StateRules.finalEquivalent(expected, actual)) {
-				planner.markVerified(pos);
+			if (actual == null || !StateRules.finalEquivalent(expected, actual)) {
+				continue;
+			}
+			boolean any = false;
+			for (BuildTarget t : planner.targetsAt(pos)) {
+				if (Planner.phaseAllowed(t.phase(), fluidsEnabled,
+						activationEnabled)) {
+					planner.markVerified(t);
+					any = true;
+				}
+			}
+			if (any) {
 				applied++;
 			}
 		}
